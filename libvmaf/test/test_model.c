@@ -371,6 +371,21 @@ static char *test_model_set_flags()
     return NULL;
 }
 
+/**
+ * This test may fail if VmafBuiltInModel's memory layout has changed
+ *  (version MUST be the first defined property in the struct)
+ */
+char *test_model_descriptor_next()
+{
+    VmafModelDescriptor *next = NULL;
+    while (next = vmaf_model_descriptor_next(next))
+    {
+        VmafBuiltInModel *builtin = next;
+        mu_assert("Version field should match on both builtin and next", next->version == builtin->version);
+    }
+    return NULL;
+}
+
 char *run_tests()
 {
     mu_run_test(test_json_model);
@@ -382,5 +397,6 @@ char *run_tests()
     mu_run_test(test_model_check_default_behavior_set_flags);
     mu_run_test(test_model_set_flags);
     mu_run_test(test_model_feature);
+    mu_run_test(test_model_descriptor_next);
     return NULL;
 }
