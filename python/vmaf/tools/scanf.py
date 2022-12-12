@@ -217,9 +217,7 @@ class CharacterBuffer(object):
         something outside what's allowable by the predicate."""
         chars = []
         countChars = 0
-        while True:
-            if maxChars != 0 and countChars >= maxChars:
-                break
+        while maxChars == 0 or countChars < maxChars:
             ch = self.getch()
             if ch != '' and predicate(ch):
                 chars.append(ch)
@@ -286,8 +284,7 @@ class CharacterBufferFromFile(CharacterBuffer):
 def readiter(inputFile, *args):
     """Returns an iterator that calls read(*args) on the inputFile."""
     while True:
-        ch = inputFile.read(*args)
-        if ch:
+        if ch := inputFile.read(*args):
             yield ch
         else:
             raise StopIteration
@@ -347,13 +344,12 @@ class CappedBuffer(CharacterBuffer):
         self.ignoreWhitespace = ignoreWhitespace
 
     def getch(self):
-        if self.bytesRead < self.width:
-            nextChar = self.buffer.getch()
-            if not self.isIgnoredChar(nextChar):
-                self.bytesRead += len(nextChar)
-            return nextChar
-        else:
+        if self.bytesRead >= self.width:
             return ''
+        nextChar = self.buffer.getch()
+        if not self.isIgnoredChar(nextChar):
+            self.bytesRead += len(nextChar)
+        return nextChar
 
     def isIgnoredChar(self, ch):
         return self.ignoreWhitespace and isWhitespaceChar(ch)
@@ -452,7 +448,7 @@ def handleDecimalInt(buffer, optional=False, allowLeadingWhitespace=True):
     except ValueError:
         if optional:
             return None
-        raise FormatError("invalid literal characters: %s" % ''.join(chars))
+        raise FormatError(f"invalid literal characters: {''.join(chars)}")
 
 
 def handleOct(buffer):
@@ -462,7 +458,7 @@ def handleOct(buffer):
     try:
         return int(''.join(chars), 8)
     except ValueError:
-        raise FormatError("invalid literal characters: %s" % ''.join(chars))
+        raise FormatError(f"invalid literal characters: {''.join(chars)}")
 
 
 def handleInt(buffer, base=0):
@@ -475,7 +471,7 @@ def handleInt(buffer, base=0):
     try:
         return int(''.join(chars), base)
     except ValueError:
-        raise FormatError("invalid literal characters: %s" % ''.join(chars))
+        raise FormatError(f"invalid literal characters: {''.join(chars)}")
 
 
 def handleHex(buffer):
@@ -496,7 +492,7 @@ def handleFloat(buffer, allowLeadingWhitespace=True):
     try:
         return float(''.join(chars))
     except ValueError:
-        raise FormatError("invalid literal characters: %s" % ''.join(chars))
+        raise FormatError(f"invalid literal characters: {''.join(chars)}")
 
 
 def handleChars(buffer,
@@ -510,10 +506,9 @@ def handleChars(buffer,
     chars += buffer.scanPredicate(lambda ch: not isBadCharacter(ch))
     if chars:
         return ''.join(chars)
-    else:
-        if optional:
-            return None
-        raise FormatError("Empty buffer.")
+    if optional:
+        return None
+    raise FormatError("Empty buffer.")
 
 
 def handleString(buffer, allowLeadingWhitespace=True):
@@ -529,11 +524,11 @@ def makeHandleLiteral(literal):
         ch = buffer.getch()
         if ch == literal:
             return ch
-        else:
-            buffer.ungetch(ch)
-            if optional:
-                return None
-            raise FormatError("%s != %s" % (literal, ch))
+        buffer.ungetch(ch)
+        if optional:
+            return None
+        raise FormatError(f"{literal} != {ch}")
+
     return f
 
 
@@ -623,7 +618,7 @@ def _compileFormat(formatBuffer):
         return handler
     else:
         # At this point, since we couldn't figure out the format, die loudly.
-        raise FormatError("Invalid format character %s" % formatCh)
+        raise FormatError(f"Invalid format character {formatCh}")
 
 
 _FORMAT_HANDLERS = {'d': handleDecimalInt,
@@ -640,9 +635,7 @@ def makeFormattedHandler(suppression, width, formatCh):
     """Given suppression, width, and a formatType, returns a function
     that eats a buffer and returns that thing."""
     def applySuppression(handler):
-        if suppression:
-            return makeIgnoredHandler(handler)
-        return handler
+        return makeIgnoredHandler(handler) if suppression else handler
 
     def applyWidth(handler):
         if width is None:

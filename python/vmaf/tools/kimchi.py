@@ -13,7 +13,7 @@ def convert(old_pkl):
     Convert a Python 2 pickle to Python 3
     """
     # Make a name for the new pickle
-    new_pkl = os.path.splitext(os.path.basename(old_pkl))[0]+"_p3.pkl"
+    new_pkl = f"{os.path.splitext(os.path.basename(old_pkl))[0]}_p3.pkl"
 
     # Convert Python 2 "ObjectType" to Python 3 object
     dill._dill._reverse_typemap["ObjectType"] = object

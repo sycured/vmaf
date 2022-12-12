@@ -30,8 +30,8 @@ class PsnrhvsFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'psnr_hvs', yuv_type, ref_path, dis_path, w, h,

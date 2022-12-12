@@ -24,8 +24,9 @@ class RawExtractor(Executor):
     def _assert_args(self):
         super(RawExtractor, self)._assert_args()
 
-        assert self.result_store is None, \
-            "{} won't use result store.".format(self.__class__.__name__)
+        assert (
+            self.result_store is None
+        ), f"{self.__class__.__name__} won't use result store."
 
 
 class AssetExtractor(RawExtractor):
@@ -84,20 +85,15 @@ class DisYUVRawVideoExtractor(H5pyMixin, RawExtractor):
     def channels(self):
         if self.optional_dict is None or 'channels' not in self.optional_dict:
             return 'yuv'
-        else:
-            channels = self.optional_dict['channels']
-            assert isinstance(channels, basestring)
-            channels = set(channels.lower())
-            assert channels.issubset(set('yuv'))
-            return ''.join(channels)
+        channels = self.optional_dict['channels']
+        assert isinstance(channels, basestring)
+        channels = set(channels.lower())
+        assert channels.issubset(set('yuv'))
+        return ''.join(channels)
 
     @override(Executor)
     def run(self, **kwargs):
-        if 'parallelize' in kwargs:
-            parallelize = kwargs['parallelize']
-        else:
-            parallelize = False
-
+        parallelize = kwargs.get('parallelize', False)
         assert parallelize is False, "DisYUVRawVideoExtractor cannot parallelize."
 
         super(DisYUVRawVideoExtractor, self).run(**kwargs)
@@ -120,8 +116,9 @@ class DisYUVRawVideoExtractor(H5pyMixin, RawExtractor):
                 break
             sleep(0.1)
         else:
-            raise RuntimeError("dis video workfile path {} is missing.".format(
-                asset.dis_workfile_path))
+            raise RuntimeError(
+                f"dis video workfile path {asset.dis_workfile_path} is missing."
+            )
 
     def _generate_result(self, asset):
         quality_w, quality_h = asset.quality_width_height
@@ -143,9 +140,9 @@ class DisYUVRawVideoExtractor(H5pyMixin, RawExtractor):
         # Y
         if 'y' in self.channels.lower():
             h5py_cache_y = self.h5py_file.create_dataset(
-                str(asset)+'_y',
+                f'{str(asset)}_y',
                 (len(dis_ys), dis_ys[0].shape[0], dis_ys[0].shape[1]),
-                dtype='float'
+                dtype='float',
             )
             h5py_cache_y.dims[0].label = 'frame'
             h5py_cache_y.dims[1].label = 'height'
@@ -156,9 +153,9 @@ class DisYUVRawVideoExtractor(H5pyMixin, RawExtractor):
         # U
         if 'u' in self.channels.lower():
             h5py_cache_u = self.h5py_file.create_dataset(
-                str(asset)+'_u',
+                f'{str(asset)}_u',
                 (len(dis_us), dis_us[0].shape[0], dis_us[0].shape[1]),
-                dtype='float'
+                dtype='float',
             )
             h5py_cache_u.dims[0].label = 'frame'
             h5py_cache_u.dims[1].label = 'height'
@@ -169,9 +166,9 @@ class DisYUVRawVideoExtractor(H5pyMixin, RawExtractor):
         # V
         if 'v' in self.channels.lower():
             h5py_cache_v = self.h5py_file.create_dataset(
-                str(asset)+'_v',
+                f'{str(asset)}_v',
                 (len(dis_vs), dis_vs[0].shape[0], dis_vs[0].shape[1]),
-                dtype='float'
+                dtype='float',
             )
             h5py_cache_v.dims[0].label = 'frame'
             h5py_cache_v.dims[1].label = 'height'
@@ -182,11 +179,11 @@ class DisYUVRawVideoExtractor(H5pyMixin, RawExtractor):
     def _read_result(self, asset):
         result = {}
         if 'y' in self.channels.lower():
-            result['dis_y'] = self.h5py_file[str(asset)+'_y']
+            result['dis_y'] = self.h5py_file[f'{str(asset)}_y']
         if 'u' in self.channels.lower():
-            result['dis_u'] = self.h5py_file[str(asset)+'_u']
+            result['dis_u'] = self.h5py_file[f'{str(asset)}_u']
         if 'v' in self.channels.lower():
-            result['dis_v'] = self.h5py_file[str(asset)+'_v']
+            result['dis_v'] = self.h5py_file[f'{str(asset)}_v']
 
         executor_id = self.executor_id
         return RawResult(asset, executor_id, result)

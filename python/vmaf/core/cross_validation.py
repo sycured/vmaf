@@ -43,10 +43,11 @@ class ModelCrossValidation(object):
         model.train(xys_train)
         stats = model.evaluate(xs_test, ys_test)
 
-        output = {'stats': stats, 'model': model,
-                  'contentids': ys_test['content_id']}
-
-        return output
+        return {
+            'stats': stats,
+            'model': model,
+            'contentids': ys_test['content_id'],
+        }
 
     @classmethod
     def run_kfold_cross_validation(cls,
@@ -87,7 +88,7 @@ class ModelCrossValidation(object):
                 kfold.append(range(index_start, index_end))
 
         assert len(kfold) >= 2, 'kfold list must have length >= 2 for k-fold ' \
-                                'cross validation.'
+                                    'cross validation.'
 
         statss = []
         models = []
@@ -100,7 +101,7 @@ class ModelCrossValidation(object):
                 train_test_model_class.reset()
 
             if logger:
-                logger.info("Fold {}...".format(fold))
+                logger.info(f"Fold {fold}...")
 
             test_index_range = kfold[fold]
             train_index_range = []
@@ -179,7 +180,7 @@ class ModelCrossValidation(object):
                 kfold.append(range(index_start, index_end))
 
         assert len(kfold) >= 3, 'kfold list must have length >= 2 for nested ' \
-                                'k-fold cross validation.'
+                                    'k-fold cross validation.'
 
         if search_strategy == 'grid':
             cls._assert_grid_search(model_param_search_range)
@@ -190,7 +191,7 @@ class ModelCrossValidation(object):
             list_model_param = cls._sample_model_param_list(
                 model_param_search_range, random_search_times)
         else:
-            assert False, "Unknown search_strategy: {}".format(search_strategy)
+            assert False, f"Unknown search_strategy: {search_strategy}"
 
         statss = []
         model_params = []
@@ -199,7 +200,7 @@ class ModelCrossValidation(object):
         for fold in range(len(kfold)):
 
             if logger:
-                logger.info("Fold {}...".format(fold))
+                logger.info(f"Fold {fold}...")
 
             test_index_range = kfold[fold]
             train_index_range = []
@@ -217,10 +218,10 @@ class ModelCrossValidation(object):
             for model_param in list_model_param:
 
                 if logger:
-                    logger.info("\tModel parameter: {}".format(model_param))
+                    logger.info(f"\tModel parameter: {model_param}")
 
                 output = \
-                    cls.run_kfold_cross_validation(train_test_model_class,
+                        cls.run_kfold_cross_validation(train_test_model_class,
                                                    model_param,
                                                    results_or_df,
                                                    train_index_range_in_list_of_indices,
@@ -253,16 +254,14 @@ class ModelCrossValidation(object):
         top_model_param, count = cls._find_most_frequent_dict(model_params)
 
         assert contentids is not None
-        output__ = {
-            'aggr_stats':aggr_stats,
-            'top_model_param':top_model_param,
-            'top_ratio':float(count) / len(model_params),
-            'statss':statss,
-            'model_params':model_params,
-            'contentids':contentids,
+        return {
+            'aggr_stats': aggr_stats,
+            'top_model_param': top_model_param,
+            'top_ratio': float(count) / len(model_params),
+            'statss': statss,
+            'model_params': model_params,
+            'contentids': contentids,
         }
-
-        return output__
 
     @classmethod
     def _assert_grid_search(cls, model_param_search_range):
@@ -287,16 +286,16 @@ class ModelCrossValidation(object):
     @classmethod
     def print_output(cls, output):
         if 'stats' in output:
-            print('Stats: {}'.format(cls.format_stats(output['stats'])))
+            print(f"Stats: {cls.format_stats(output['stats'])}")
         if 'aggr_stats' in output:
-            print('Aggregated stats: {}'.format(cls.format_stats(output['aggr_stats'])))
+            print(f"Aggregated stats: {cls.format_stats(output['aggr_stats'])}")
         if 'top_model_param' in output:
             print('Top model param ({ratio:.3f}): {modelparam}'.format(
                 ratio=output['top_ratio'],
                 modelparam=output['top_model_param']))
         if 'statss' in output and 'model_params' in output:
             for fold, (stats, model_param) in \
-                    enumerate(zip(output['statss'], output['model_params'])):
+                        enumerate(zip(output['statss'], output['model_params'])):
                 print('Fold {fold}: {model_param}, {stats}'.format(
                     fold=fold, model_param=model_param,
                     stats=cls.format_stats(stats)))
@@ -310,7 +309,7 @@ class ModelCrossValidation(object):
     def _sample_model_param_list(model_param_search_range, random_search_times):
         keys = sorted(model_param_search_range.keys()) # normalize order
         list_of_dicts = []
-        for i in range(random_search_times):
+        for _ in range(random_search_times):
             d = {}
             for k in keys:
                 v = model_param_search_range[k]

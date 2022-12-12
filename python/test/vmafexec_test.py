@@ -25,7 +25,6 @@ class VmafexecQualityRunnerTest(MyTestCase):
     def tearDown(self):
         if hasattr(self, 'runner'):
             self.runner.remove_results()
-            pass
         super().tearDown()
 
     def test_run_vmafexec_runner_matched_to_vmafossexec(self):
@@ -270,15 +269,16 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset, asset_original],
-            None, fifo_mode=True,
+            None,
+            fifo_mode=True,
             delete_workdir=True,
             result_store=None,
             optional_dict={
                 'models': [
-                    'path={}:name=custom_vmaf_0'.format(VmafConfig.model_path("vmaf_float_v0.6.1.json")),
-                    'path={}:name=custom_vmaf_1'.format(VmafConfig.model_path("vmaf_float_v0.6.1.json")),
+                    f'path={VmafConfig.model_path("vmaf_float_v0.6.1.json")}:name=custom_vmaf_0',
+                    f'path={VmafConfig.model_path("vmaf_float_v0.6.1.json")}:name=custom_vmaf_1',
                 ]
-            }
+            },
         )
         self.runner.run(parallelize=True)
 
@@ -295,15 +295,16 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset, asset_original],
-            None, fifo_mode=True,
+            None,
+            fifo_mode=True,
             delete_workdir=True,
             result_store=None,
             optional_dict={
                 'models': [
-                    'path={}:name=standvmaf'.format(VmafConfig.model_path("vmaf_float_v0.6.1.json")),
-                    'path={}:name=phonevmaf:enable_transform'.format(VmafConfig.model_path("vmaf_float_v0.6.1.json")),
+                    f'path={VmafConfig.model_path("vmaf_float_v0.6.1.json")}:name=standvmaf',
+                    f'path={VmafConfig.model_path("vmaf_float_v0.6.1.json")}:name=phonevmaf:enable_transform',
                 ]
-            }
+            },
         )
         self.runner.run(parallelize=True)
 
@@ -1114,12 +1115,13 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset],
-            None, fifo_mode=True,
+            None,
+            fifo_mode=True,
             delete_workdir=True,
             optional_dict={
                 'models': [
-                    'path={}:name=vmat:enable_transform'.format(VmafConfig.test_resource_path("test_model_transform_add40.json")),
-                ],
+                    f'path={VmafConfig.test_resource_path("test_model_transform_add40.json")}:name=vmat:enable_transform'
+                ]
             },
             result_store=self.result_store,
         )
@@ -1151,12 +1153,13 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset],
-            None, fifo_mode=True,
+            None,
+            fifo_mode=True,
             delete_workdir=True,
             optional_dict={
                 'models': [
-                    'path={}:name=vmat:enable_transform:disable_clip'.format(VmafConfig.test_resource_path("test_model_transform_add40_outltein.json")),
-                ],
+                    f'path={VmafConfig.test_resource_path("test_model_transform_add40_outltein.json")}:name=vmat:enable_transform:disable_clip'
+                ]
             },
             result_store=self.result_store,
         )
@@ -1188,12 +1191,13 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset],
-            None, fifo_mode=True,
+            None,
+            fifo_mode=True,
             delete_workdir=True,
             optional_dict={
                 'models': [
-                    'path={}:name=vmat:enable_transform'.format(VmafConfig.test_resource_path("test_model_transform_add40_piecewiselinear.json")),
-                ],
+                    f'path={VmafConfig.test_resource_path("test_model_transform_add40_piecewiselinear.json")}:name=vmat:enable_transform'
+                ]
             },
             result_store=self.result_store,
         )
@@ -1225,12 +1229,13 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset],
-            None, fifo_mode=False,
+            None,
+            fifo_mode=False,
             delete_workdir=True,
             optional_dict={
                 'models': [
-                    'path={}:name=vmat'.format(VmafConfig.test_resource_path("test_model_transform_add40_piecewiselinear_forced.json")),
-                ],
+                    f'path={VmafConfig.test_resource_path("test_model_transform_add40_piecewiselinear_forced.json")}:name=vmat'
+                ]
             },
             result_store=self.result_store,
         )
@@ -1262,12 +1267,13 @@ class VmafexecQualityRunnerTest(MyTestCase):
 
         self.runner = VmafexecQualityRunner(
             [asset],
-            None, fifo_mode=False,
+            None,
+            fifo_mode=False,
             delete_workdir=True,
             optional_dict={
                 'models': [
-                    'path={}:name=vmat:enable_transform'.format(VmafConfig.test_resource_path("test_model_transform_add40_piecewiselinear_forced.json")),
-                ],
+                    f'path={VmafConfig.test_resource_path("test_model_transform_add40_piecewiselinear_forced.json")}:name=vmat:enable_transform'
+                ]
             },
             result_store=self.result_store,
         )

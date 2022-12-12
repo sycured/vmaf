@@ -49,7 +49,7 @@ def main():
             VmafConfig.resource_path('dataset', 'NFLX_dataset_public.py'), subsample)
         elapsed_times.append(elapsed_time)
         pccs.append(pcc)
-        print("SRCC: {}, PCC: {}, RMSE: {}, time: {}".format(srcc, pcc, rmse, elapsed_time))
+        print(f"SRCC: {srcc}, PCC: {pcc}, RMSE: {rmse}, time: {elapsed_time}")
 
     fig, ax = plt.subplots(1, 1, figsize=[8, 5])
     ax.plot(subsamples, 6*24*79 / np.array(elapsed_times), 'x-')

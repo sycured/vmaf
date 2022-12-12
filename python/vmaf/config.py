@@ -45,8 +45,6 @@ class VmafExternalConfig(object):
                 return path
         except ImportError:
             print('ImportError')
-            pass
-
         return None
 
     @staticmethod
@@ -57,11 +55,9 @@ class VmafExternalConfig(object):
         """
         try:
             from . import externals
-            attr = getattr(externals, name, None)
-            return attr
+            return getattr(externals, name, None)
         except ImportError:
             print('ImportError')
-            pass
         return None
 
     @classmethod
@@ -209,9 +205,7 @@ class VmafConfig(object):
     @classmethod
     def test_resource_path(cls, *components, bypass_download=False):
         local_path = cls.root_path('python', 'test', 'resource', *components)
-        if bypass_download:
-            pass
-        else:
+        if not bypass_download:
             remote_path = os.path.join(VMAF_RESOURCE_ROOT, 'python', 'test', 'resource', *components)
             download_reactively(local_path, remote_path)
         return local_path
@@ -231,11 +225,11 @@ class DisplayConfig(object):
     def show(**kwargs):
         from vmaf import plt
         if 'write_to_dir' in kwargs:
-            format = kwargs['format'] if 'format' in kwargs else 'png'
+            format = kwargs.get('format', 'png')
             filedir = kwargs['write_to_dir'] if kwargs['write_to_dir'] is not None else VmafConfig.workspace_path('output')
             os.makedirs(filedir, exist_ok=True)
             for fignum in plt.get_fignums():
                 fig = plt.figure(fignum)
-                fig.savefig(os.path.join(filedir, str(fignum) + '.' + format), format=format)
+                fig.savefig(os.path.join(filedir, f'{str(fignum)}.{format}'), format=format)
         else:
             plt.show()

@@ -41,7 +41,7 @@ class FeatureExtractor(Executor):
 
     def _read_result(self, asset):
         result = {}
-        result.update(self._get_feature_scores(asset))
+        result |= self._get_feature_scores(asset)
         executor_id = self.executor_id
         return Result(asset, executor_id, result)
 
@@ -68,29 +68,25 @@ class FeatureExtractor(Executor):
             atom_feature_idx_dict[atom_feature] = 0
 
         with open(log_file_path, 'rt') as log_file:
-            for line in log_file.readlines():
+            for line in log_file:
                 for atom_feature in self.ATOM_FEATURES:
                     re_template = "{af}: ([0-9]+) ([a-zA-Z0-9.-]+)".format(af=atom_feature)
-                    mo = re.match(re_template, line)
-                    if mo:
-
-                        cur_idx = int(mo.group(1))
+                    if mo := re.match(re_template, line):
+                        cur_idx = int(mo[1])
                         assert cur_idx == atom_feature_idx_dict[atom_feature]
 
                         # parse value, allowing NaN and inf
-                        val = float(mo.group(2))
+                        val = float(mo[2])
                         if np.isnan(val) or np.isinf(val):
                             val = None
 
                         atom_feature_scores_dict[atom_feature].append(val)
                         atom_feature_idx_dict[atom_feature] += 1
-                        continue
-
         len_score = len(atom_feature_scores_dict[self.ATOM_FEATURES[0]])
         assert len_score != 0
         for atom_feature in self.ATOM_FEATURES[1:]:
             assert len_score == len(atom_feature_scores_dict[atom_feature]), \
-                "Feature data possibly corrupt. Run cleanup script and try again."
+                    "Feature data possibly corrupt. Run cleanup script and try again."
 
         feature_result = {}
 
@@ -165,14 +161,14 @@ class VmafexecFeatureExtractorMixin(object):
     def _discover_feature_wildcard(cls, frame, i_feature, feature,
                                    feature_scores, feature_nicknames):
         assert hasattr(cls, 'ATOM_FEATURES_TO_VMAFEXEC_KEY_DICT')
-        feature_prefix = cls.ATOM_FEATURES_TO_VMAFEXEC_KEY_DICT[feature] + '_'
+        feature_prefix = f'{cls.ATOM_FEATURES_TO_VMAFEXEC_KEY_DICT[feature]}_'
         feature_found = False
         for feature_fullname in frame.attrib:
             if feature_fullname.startswith(feature_prefix):
                 feature_scores[i_feature].append(
                     float(frame.attrib[feature_fullname]))
                 feature_suffix = feature_fullname[len(feature_prefix):]
-                feature_nickname = feature + '_' + feature_suffix
+                feature_nickname = f'{feature}_{feature_suffix}'
                 if feature_nicknames[i_feature] is None:
                     feature_nicknames[i_feature] = feature_nickname
                 else:
@@ -260,9 +256,6 @@ class VmafFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
                     options['float_adm']['adm_ref_display_height'] = self.optional_dict['adm_ref_display_height']
                 elif opt == 'motion_force_zero':
                     options['float_motion']['motion_force_zero'] = self.optional_dict['motion_force_zero']
-                else:
-                    pass
-
         if self.optional_dict2 is not None:
             for opt in self.optional_dict2:
                 if opt == 'disable_avx':
@@ -435,9 +428,6 @@ class VmafIntegerFeatureExtractor(VmafFeatureExtractor):
                     options['adm']['adm_ref_display_height'] = self.optional_dict['adm_ref_display_height']
                 elif opt == 'motion_force_zero':
                     options['motion']['motion_force_zero'] = self.optional_dict['motion_force_zero']
-                else:
-                    pass
-
         if self.optional_dict2 is not None:
             for opt in self.optional_dict2:
                 if opt == 'disable_avx':
@@ -548,14 +538,11 @@ class PyFeatureExtractorMixin(object):
             log_str = log_file.read()
             log_dicts = ast.literal_eval(log_str)
 
-        feature_result = dict()
-        frm = 0
-        for log_dict in log_dicts:
+        feature_result = {}
+        for frm, log_dict in enumerate(log_dicts):
             assert frm == log_dict['frame']
             for feature in self.ATOM_FEATURES:
                 feature_result.setdefault(self.get_scores_key(feature), []).append(log_dict[feature])
-            frm += 1
-
         return feature_result
 
 
@@ -597,7 +584,7 @@ class PypsnrFeatureExtractor(PyFeatureExtractorMixin, FeatureExtractor):
     def _generate_result(self, asset):
         quality_w, quality_h = asset.quality_width_height
         yuv_type = self._get_workfile_yuv_type(asset)
-        log_dicts = list()
+        log_dicts = []
         with YuvReader(filepath=asset.ref_procfile_path, width=quality_w, height=quality_h,
                        yuv_type=yuv_type) as ref_yuv_reader:
             with YuvReader(filepath=asset.dis_procfile_path, width=quality_w, height=quality_h,
@@ -617,11 +604,11 @@ class PypsnrFeatureExtractor(PyFeatureExtractorMixin, FeatureExtractor):
                     ref_y, ref_u, ref_v = ref_yuv
                     dis_y, dis_u, dis_v = dis_yuv
                     mse_y, mse_u, mse_v = np.mean((ref_y - dis_y)**2) + 1e-16, \
-                                          np.mean((ref_u - dis_u)**2) + 1e-16, \
-                                          np.mean((ref_v - dis_v)**2) + 1e-16
+                                              np.mean((ref_u - dis_u)**2) + 1e-16, \
+                                              np.mean((ref_v - dis_v)**2) + 1e-16
                     psnr_y, psnr_u, psnr_v = min(10 * np.log10(1.0 / mse_y), max_db), \
-                                             min(10 * np.log10(1.0 / mse_u), max_db), \
-                                             min(10 * np.log10(1.0 / mse_v), max_db)
+                                                 min(10 * np.log10(1.0 / mse_u), max_db), \
+                                                 min(10 * np.log10(1.0 / mse_v), max_db)
 
                     log_dicts.append({
                         'frame': frm,
@@ -647,7 +634,7 @@ class PypsnrMaxdb100FeatureExtractor(PypsnrFeatureExtractor):
         if self.optional_dict is not None:
             assert 'max_db' not in self.optional_dict
         if self.optional_dict is None:
-            self.optional_dict = dict()
+            self.optional_dict = {}
         self.optional_dict['max_db'] = 100.0
 
 
@@ -677,7 +664,7 @@ class PsnrFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_psnr', yuv_type, ref_path, dis_path, w, h,
@@ -703,30 +690,26 @@ class MomentFeatureExtractor(FeatureExtractor):
 
         ref_scores_mtx = None
         with YuvReader(filepath=asset.ref_procfile_path, width=quality_w, height=quality_h,
-                       yuv_type=self._get_workfile_yuv_type(asset)) as ref_yuv_reader:
+                           yuv_type=self._get_workfile_yuv_type(asset)) as ref_yuv_reader:
             scores_mtx_list = []
-            i = 0
             for ref_yuv in ref_yuv_reader:
                 ref_y = ref_yuv[0]
                 ref_y = ref_y.astype(np.double)
                 firstm = ref_y.mean()
                 secondm = ref_y.var() + firstm**2
                 scores_mtx_list.append(np.hstack(([firstm], [secondm])))
-                i += 1
             ref_scores_mtx = np.vstack(scores_mtx_list)
 
         dis_scores_mtx = None
         with YuvReader(filepath=asset.dis_procfile_path, width=quality_w, height=quality_h,
-                       yuv_type=self._get_workfile_yuv_type(asset)) as dis_yuv_reader:
+                           yuv_type=self._get_workfile_yuv_type(asset)) as dis_yuv_reader:
             scores_mtx_list = []
-            i = 0
             for dis_yuv in dis_yuv_reader:
                 dis_y = dis_yuv[0]
                 dis_y = dis_y.astype(np.double)
                 firstm = dis_y.mean()
                 secondm = dis_y.var() + firstm**2
                 scores_mtx_list.append(np.hstack(([firstm], [secondm])))
-                i += 1
             dis_scores_mtx = np.vstack(scores_mtx_list)
 
         assert ref_scores_mtx is not None and dis_scores_mtx is not None
@@ -755,8 +738,7 @@ class MomentFeatureExtractor(FeatureExtractor):
         _, num_dis_features = dis_scores_mtx.shape
         assert num_dis_features == 2 # dis1st, dis2nd
 
-        feature_result = {}
-        feature_result[self.get_scores_key('ref1st')] = list(ref_scores_mtx[:, 0])
+        feature_result = {self.get_scores_key('ref1st'): list(ref_scores_mtx[:, 0])}
         feature_result[self.get_scores_key('ref2nd')] = list(ref_scores_mtx[:, 1])
         feature_result[self.get_scores_key('dis1st')] = list(dis_scores_mtx[:, 0])
         feature_result[self.get_scores_key('dis2nd')] = list(dis_scores_mtx[:, 1])
@@ -824,7 +806,7 @@ class SsimFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_ssim', yuv_type, ref_path, dis_path, w, h,
@@ -883,7 +865,7 @@ class MsSsimFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_ms_ssim', yuv_type, ref_path, dis_path, w, h,
@@ -916,7 +898,7 @@ class AnsnrFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_ansnr', yuv_type, ref_path, dis_path, w, h, log_file_path, logger,

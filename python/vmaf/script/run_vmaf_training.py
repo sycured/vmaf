@@ -27,10 +27,14 @@ SUBJECTIVE_MODELS = ['DMOS', 'DMOS_MLE', 'MLE', 'MLE_CO_AP',
 
 
 def print_usage():
-    print("usage: " + os.path.basename(sys.argv[0]) + \
-        " train_dataset_filepath feature_param_filepath model_param_filepath output_model_filepath " \
-        "[--subj-model subjective_model] [--cache-result] [--parallelize] [--save-plot plot_dir] "
-        "[--processes processes]\n")
+    print(
+        (
+            f"usage: {os.path.basename(sys.argv[0])}"
+            + " train_dataset_filepath feature_param_filepath model_param_filepath output_model_filepath "
+            "[--subj-model subjective_model] [--cache-result] [--parallelize] [--save-plot plot_dir] "
+            "[--processes processes]\n"
+        )
+    )
     print("subjective_model:\n\t" + "\n\t".join(SUBJECTIVE_MODELS) + "\n")
     print("processes: must be an integer >=1")
 
@@ -55,7 +59,7 @@ def main():
         feature_param = import_python_file(feature_param_filepath)
         model_param = import_python_file(model_param_filepath)
     except Exception as e:
-        print("Error: %s" % e)
+        print(f"Error: {e}")
         return 1
 
     cache_result = cmd_option_exists(sys.argv, 3, len(sys.argv), '--cache-result')
@@ -64,9 +68,8 @@ def main():
     suppress_plot = cmd_option_exists(sys.argv, 3, len(sys.argv), '--suppress-plot')
 
     pool_method = get_cmd_option(sys.argv, 3, len(sys.argv), '--pool')
-    if not (pool_method is None
-            or pool_method in POOL_METHODS):
-        print('--pool can only have option among {}'.format(', '.join(POOL_METHODS)))
+    if pool_method is not None and pool_method not in POOL_METHODS:
+        print(f"--pool can only have option among {', '.join(POOL_METHODS)}")
         return 2
 
     subj_model = get_cmd_option(sys.argv, 3, len(sys.argv), '--subj-model')
@@ -78,16 +81,12 @@ def main():
         else:
             subj_model_class = SubjectiveModel.find_subclass('MLE_CO_AP2')
     except Exception as e:
-        print("Error: %s" % e)
+        print(f"Error: {e}")
         return 1
 
     save_plot_dir = get_cmd_option(sys.argv, 3, len(sys.argv), '--save-plot')
 
-    if cache_result:
-        result_store = FileSystemResultStore()
-    else:
-        result_store = None
-
+    result_store = FileSystemResultStore() if cache_result else None
     if processes is not None:
         try:
             processes = int(processes)
@@ -98,17 +97,17 @@ def main():
     # pooling
     if pool_method == 'harmonic_mean':
         aggregate_method = ListStats.harmonic_mean
-    elif pool_method == 'min':
-        aggregate_method = np.min
     elif pool_method == 'median':
         aggregate_method = np.median
-    elif pool_method == 'perc5':
-        aggregate_method = ListStats.perc5
+    elif pool_method == 'min':
+        aggregate_method = np.min
     elif pool_method == 'perc10':
         aggregate_method = ListStats.perc10
     elif pool_method == 'perc20':
         aggregate_method = ListStats.perc20
-    else: # None or 'mean'
+    elif pool_method == 'perc5':
+        aggregate_method = ListStats.perc5
+    else:
         aggregate_method = np.mean
 
     logger = None

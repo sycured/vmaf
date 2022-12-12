@@ -12,8 +12,12 @@ __license__ = "BSD+Patent"
 
 def print_usage():
     quality_runner_types = ['VMAF', 'PSNR', 'SSIM', 'MS_SSIM']
-    print("usage: " + os.path.basename(sys.argv[0]) + \
-          " quality_type dataset_filepath\n")
+    print(
+        (
+            f"usage: {os.path.basename(sys.argv[0])}"
+            + " quality_type dataset_filepath\n"
+        )
+    )
     print("quality_type:\n\t" + "\n\t".join(quality_runner_types) +"\n")
 
 
@@ -32,7 +36,7 @@ def main():
     try:
         dataset = import_python_file(dataset_filepath)
     except Exception as e:
-        print("Error: " + str(e))
+        print(f"Error: {str(e)}")
         return 1
 
     try:

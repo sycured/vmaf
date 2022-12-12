@@ -63,9 +63,10 @@ class YuvWriter(object):
         return self.UV_WIDTH_HEIGHT_MULTIPLIERS_DICT[self.yuv_type]
 
     def _assert_yuv_type(self):
-        assert (self.yuv_type in self.SUPPORTED_YUV_8BIT_TYPES
-                or self.yuv_type in self.SUPPORTED_YUV_10BIT_LE_TYPES), \
-            'Unsupported YUV type: {}'.format(self.yuv_type)
+        assert (
+            self.yuv_type in self.SUPPORTED_YUV_8BIT_TYPES
+            or self.yuv_type in self.SUPPORTED_YUV_10BIT_LE_TYPES
+        ), f'Unsupported YUV type: {self.yuv_type}'
 
     def _asserts(self):
 
@@ -75,9 +76,9 @@ class YuvWriter(object):
     def next(self, y, u, v, format='uint'):
 
         assert format in ['uint', 'float2uint'], \
-            "For now support two modes: \n" \
-            "uint - directly map y, u, v values to the corresponding uint types; \n" \
-            "float2uint - assume y, u, v are in [0, 1], do proper scaling and map to the corresponding uint types"
+                "For now support two modes: \n" \
+                "uint - directly map y, u, v values to the corresponding uint types; \n" \
+                "float2uint - assume y, u, v are in [0, 1], do proper scaling and map to the corresponding uint types"
 
         y_width = self.width
         y_height = self.height
@@ -103,22 +104,21 @@ class YuvWriter(object):
         else:
             assert False
 
-        if format == 'uint':
-            pass
-        elif format == 'float2uint':
-            if self._is_8bit():
-                y = y.astype(np.double) * (2.0**8 - 1.0)
-                u = u.astype(np.double) * (2.0**8 - 1.0) if u is not None else None
-                v = v.astype(np.double) * (2.0**8 - 1.0) if v is not None else None
-            elif self._is_10bitle():
-                y = y.astype(np.double) * (2.0**10 - 1.0)
-                u = u.astype(np.double) * (2.0**10 - 1.0) if u is not None else None
-                v = v.astype(np.double) * (2.0**10 - 1.0) if v is not None else None
-            else:
-                assert False
-        else:
+        if format == 'float2uint' and self._is_8bit():
+            y = y.astype(np.double) * (2.0**8 - 1.0)
+            u = u.astype(np.double) * (2.0**8 - 1.0) if u is not None else None
+            v = v.astype(np.double) * (2.0**8 - 1.0) if v is not None else None
+        elif format == 'float2uint' and not self._is_8bit() and self._is_10bitle():
+            y = y.astype(np.double) * (2.0**10 - 1.0)
+            u = u.astype(np.double) * (2.0**10 - 1.0) if u is not None else None
+            v = v.astype(np.double) * (2.0**10 - 1.0) if v is not None else None
+        elif (
+            format == 'float2uint'
+            and not self._is_8bit()
+            and not self._is_10bitle()
+            or format not in ['float2uint', 'uint']
+        ):
             assert False
-
         self.file.write(y.astype(pix_type).tobytes())
         if u is not None:
             self.file.write(u.astype(pix_type).tobytes())

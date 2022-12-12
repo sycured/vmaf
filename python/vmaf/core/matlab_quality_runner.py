@@ -30,7 +30,7 @@ class StrredQualityRunner(QualityRunner):
 
         feature_dict = {StrredFeatureExtractor.TYPE: StrredFeatureExtractor.ATOM_FEATURES + getattr(StrredFeatureExtractor, 'DERIVED_ATOM_FEATURES', [])}
 
-        feature_assembler = FeatureAssembler(
+        return FeatureAssembler(
             feature_dict=feature_dict,
             feature_option_dict=None,
             assets=[asset],
@@ -40,10 +40,9 @@ class StrredQualityRunner(QualityRunner):
             result_store=self.result_store,
             optional_dict=None,  # WARNING: feature param not passed
             optional_dict2=None,
-            parallelize=False, # parallelization already in a higher level
+            parallelize=False,  # parallelization already in a higher level
             save_workfiles=self.save_workfiles,
         )
-        return feature_assembler
 
     @override(Executor)
     def _run_on_asset(self, asset):
@@ -51,7 +50,7 @@ class StrredQualityRunner(QualityRunner):
         vmaf_fassembler.run()
         feature_result = vmaf_fassembler.results[0]
         result_dict = {}
-        result_dict.update(feature_result.result_dict.copy()) # add feature result
+        result_dict |= feature_result.result_dict.copy()
         result_dict[self.get_scores_key()] = feature_result.result_dict[
             StrredFeatureExtractor.get_scores_key('strred')] # add strred score
         del result_dict[StrredFeatureExtractor.get_scores_key('strred')] # delete redundant
@@ -81,7 +80,7 @@ class StrredOptQualityRunner(QualityRunner):
 
         feature_dict = {StrredOptFeatureExtractor.TYPE: StrredOptFeatureExtractor.ATOM_FEATURES + getattr(StrredOptFeatureExtractor, 'DERIVED_ATOM_FEATURES', [])}
 
-        feature_assembler = FeatureAssembler(
+        return FeatureAssembler(
             feature_dict=feature_dict,
             feature_option_dict=None,
             assets=[asset],
@@ -91,10 +90,9 @@ class StrredOptQualityRunner(QualityRunner):
             result_store=self.result_store,
             optional_dict=None,  # WARNING: feature param not passed
             optional_dict2=None,
-            parallelize=False, # parallelization already in a higher level
+            parallelize=False,  # parallelization already in a higher level
             save_workfiles=self.save_workfiles,
         )
-        return feature_assembler
 
     @override(Executor)
     def _run_on_asset(self, asset):
@@ -102,7 +100,7 @@ class StrredOptQualityRunner(QualityRunner):
         vmaf_fassembler.run()
         feature_result = vmaf_fassembler.results[0]
         result_dict = {}
-        result_dict.update(feature_result.result_dict.copy()) # add feature result
+        result_dict |= feature_result.result_dict.copy()
         result_dict[self.get_scores_key()] = feature_result.result_dict[
             StrredOptFeatureExtractor.get_scores_key('strred')] # add strred score
         del result_dict[StrredOptFeatureExtractor.get_scores_key('strred')] # delete redundant
@@ -134,7 +132,7 @@ class SpEEDMatlabQualityRunner(QualityRunner):
             feature_dict = {SpEEDMatlabFeatureExtractor.TYPE: SpEEDMatlabFeatureExtractor.ATOM_FEATURES + getattr(
                 SpEEDMatlabFeatureExtractor, 'DERIVED_ATOM_FEATURES', [])}
 
-            feature_assembler = FeatureAssembler(
+            return FeatureAssembler(
                 feature_dict=feature_dict,
                 feature_option_dict=None,
                 assets=[asset],
@@ -147,7 +145,6 @@ class SpEEDMatlabQualityRunner(QualityRunner):
                 parallelize=False,  # parallelization already in a higher level
                 save_workfiles=self.save_workfiles,
             )
-            return feature_assembler
 
         @override(Executor)
         def _run_on_asset(self, asset):
@@ -155,7 +152,7 @@ class SpEEDMatlabQualityRunner(QualityRunner):
             speed_fassembler.run()
             feature_result = speed_fassembler.results[0]
             result_dict = {}
-            result_dict.update(feature_result.result_dict.copy())  # add feature result
+            result_dict |= feature_result.result_dict.copy()
 
             result_dict[self.get_scores_key()] = feature_result.result_dict[
                 SpEEDMatlabFeatureExtractor.get_scores_key('speed_4')]  # add SpEED score at scale 4
@@ -186,7 +183,7 @@ class STMADQualityRunner(QualityRunner):
         feature_dict = {STMADFeatureExtractor.TYPE: STMADFeatureExtractor.ATOM_FEATURES + getattr(
             STMADFeatureExtractor, 'DERIVED_ATOM_FEATURES', [])}
 
-        feature_assembler = FeatureAssembler(
+        return FeatureAssembler(
             feature_dict=feature_dict,
             feature_option_dict=None,
             assets=[asset],
@@ -199,7 +196,6 @@ class STMADQualityRunner(QualityRunner):
             parallelize=False,  # parallelization already in a higher level
             save_workfiles=self.save_workfiles,
         )
-        return feature_assembler
 
     @override(Executor)
     def _run_on_asset(self, asset):
@@ -207,7 +203,7 @@ class STMADQualityRunner(QualityRunner):
         vmaf_fassembler.run()
         feature_result = vmaf_fassembler.results[0]
         result_dict = {}
-        result_dict.update(feature_result.result_dict.copy())  # add feature result
+        result_dict |= feature_result.result_dict.copy()
         result_dict[self.get_scores_key()] = feature_result.result_dict[
             STMADFeatureExtractor.get_scores_key('stmad')]  # add strred score
         del result_dict[STMADFeatureExtractor.get_scores_key('stmad')]  # delete redundant
@@ -237,7 +233,7 @@ class ICIDQualityRunner(QualityRunner):
        feature_dict = {iCIDFeatureExtractor.TYPE: iCIDFeatureExtractor.ATOM_FEATURES + getattr(
            iCIDFeatureExtractor, 'DERIVED_ATOM_FEATURES', [])}
 
-       feature_assembler = FeatureAssembler(
+       return FeatureAssembler(
            feature_dict=feature_dict,
            feature_option_dict=None,
            assets=[asset],
@@ -250,7 +246,6 @@ class ICIDQualityRunner(QualityRunner):
            parallelize=False,  # parallelization already in a higher level
            save_workfiles=self.save_workfiles,
        )
-       return feature_assembler
 
    def _run_on_asset(self, asset):
        # Override Executor._run_on_asset(self, asset)
@@ -258,7 +253,7 @@ class ICIDQualityRunner(QualityRunner):
        vmaf_fassembler.run()
        feature_result = vmaf_fassembler.results[0]
        result_dict = {}
-       result_dict.update(feature_result.result_dict.copy())  # add feature result
+       result_dict |= feature_result.result_dict.copy()
        result_dict[self.get_scores_key()] = feature_result.result_dict[
            iCIDFeatureExtractor.get_scores_key('icid')]  # add strred score
        del result_dict[iCIDFeatureExtractor.get_scores_key('icid')]  # delete redundant

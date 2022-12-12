@@ -25,7 +25,6 @@ class VmafossexecQualityRunnerTest(MyTestCase):
     def tearDown(self):
         if hasattr(self, 'runner'):
             self.runner.remove_results()
-            pass
         super().tearDown()
 
     def test_run_vmafossexec_runner(self):

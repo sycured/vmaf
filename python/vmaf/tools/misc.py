@@ -108,10 +108,7 @@ def get_normalized_path(dir_):
     'abc/xyz.txt'
 
     """
-    if dir_[-1] == '/':
-        return dir_[:-1]
-    else:
-        return dir_
+    return dir_[:-1] if dir_[-1] == '/' else dir_
 
 
 def get_dir_without_last_slash(path):
@@ -214,7 +211,6 @@ def import_python_file(filepath : str, override : dict = None):
         except ImportError:
             import imp
             ret = imp.load_source(filename, filepath)
-        return ret
     else:
         override_ = override.copy()
         tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix='.py')
@@ -222,19 +218,19 @@ def import_python_file(filepath : str, override : dict = None):
             with open(tmpfile.name, 'w') as fout:
                 while True:
                     line = fin.readline()
-                    if len(override_) > 0:
+                    if override_:
                         suffixes = []
                         for key in list(override_.keys()):
                             if key in line and '=' in line:
                                 s = f"{key} = '{override_[key]}'" if isinstance(override_[key], str) else f"{key} = {override_[key]}"
                                 suffixes.append(s)
                                 del override_[key]
-                        if len(suffixes) > 0:
+                        if suffixes:
                             line = '\n'.join([line.strip()] + suffixes) + '\n'
                     fout.write(line)
                     if not line:
                         break
-                if len(override_) > 0:
+                if override_:
                     for key in override_:
                         s = f"{key} = '{override_[key]}'" if isinstance(override_[key], str) else f"{key} = {override_[key]}"
                         s += '\n'
@@ -245,7 +241,8 @@ def import_python_file(filepath : str, override : dict = None):
         #=====================================
         ret = import_python_file(tmpfile.name)
         os.remove(tmpfile.name)
-        return ret
+
+    return ret
 
 
 def make_absolute_path(path, current_dir):
@@ -257,10 +254,7 @@ def make_absolute_path(path, current_dir):
     '/abc/cde.fg'
 
     '''
-    if path[0] == '/':
-        return path
-    else:
-        return current_dir + path
+    return path if path[0] == '/' else current_dir + path
 
 
 def empty_object():
@@ -287,9 +281,7 @@ def get_cmd_option(argv, begin, end, option):
     for itr in range(begin, end):
         if argv[itr] == option:
             break
-    if itr is not None and itr != end and (itr + 1) != end:
-        return argv[itr + 1]
-    return None
+    return None if itr is None or itr == end or itr + 1 == end else argv[itr + 1]
 
 
 def cmd_option_exists(argv, begin, end, option):
@@ -307,12 +299,7 @@ def cmd_option_exists(argv, begin, end, option):
     False
 
     '''
-    found = False
-    for itr in range(begin, end):
-        if argv[itr] == option:
-            found = True
-            break
-    return found
+    return any(argv[itr] == option for itr in range(begin, end))
 
 
 def index_and_value_of_min(l):
@@ -367,14 +354,14 @@ def parallel_map(func, list_args, processes=None):
                 active_procs.remove(p)
 
         # check if can add a proc to active_procs (add gradually one per loop)
-        if len(active_procs) < max_active_procs and len(waiting_procs) > 0:
+        if len(active_procs) < max_active_procs and waiting_procs:
             # move one proc from waiting_procs to active_procs
             p = waiting_procs.pop()
             active_procs.add(p)
             p.start()
 
         # if both waiting_procs and active_procs are empty, can terminate
-        if len(waiting_procs) == 0 and len(active_procs) == 0:
+        if not waiting_procs and not active_procs:
             break
 
         sleep(0.01) # check every x sec
@@ -445,16 +432,13 @@ def check_scanf_match(string, template):
     except (FormatError, IncompleteCaptureError):
         pass
 
-    if fnmatch(string, template):
-        return True
-
-    return False
+    return bool(fnmatch(string, template))
 
 
 def match_any_files(template):
     dir_ = os.path.dirname(template)
     for filename in os.listdir(dir_):
-        filepath = dir_ + '/' + filename
+        filepath = f'{dir_}/{filename}'
         if check_scanf_match(filepath, template):
             return True
     return False
@@ -473,19 +457,16 @@ def unroll_dict_of_lists(dict_of_lists):
     list_of_key_value_pairs = []
     for key in keys:
         values = dict_of_lists[key]
-        key_value_pairs = []
-        for value in values:
-            key_value_pairs.append((key, value))
+        key_value_pairs = [(key, value) for value in values]
         list_of_key_value_pairs.append(key_value_pairs)
 
     list_of_key_value_pairs_rearranged = \
         itertools.product(*list_of_key_value_pairs)
 
-    list_of_dicts = []
-    for key_value_pairs in list_of_key_value_pairs_rearranged:
-        list_of_dicts.append(dict(key_value_pairs))
-
-    return list_of_dicts
+    return [
+        dict(key_value_pairs)
+        for key_value_pairs in list_of_key_value_pairs_rearranged
+    ]
 
 
 def neg_if_even(x):
@@ -521,7 +502,7 @@ class Timer(object):
         self.tstart = time()
 
     def __exit__(self, type, value, traceback):
-        print('Elapsed: %s sec' % (time() - self.tstart))
+        print(f'Elapsed: {time() - self.tstart} sec')
 
 
 def dedup_value_in_dict(d):
@@ -529,16 +510,13 @@ def dedup_value_in_dict(d):
     >>> dedup_value_in_dict({'a': 1, 'b': 1, 'c': 2}) == {'a': 1, 'c': 2}
     True
     """
-    reversed_d = dict()
+    reversed_d = {}
     keys = sorted(d.keys())
     for key in keys:
         value = d[key]
         if value not in reversed_d:
             reversed_d[value] = key
-    d_ = dict()
-    for value, key in reversed_d.items():
-        d_[key] = value
-    return d_
+    return {key: value for value, key in reversed_d.items()}
 
 
 class MyTestCase(unittest.TestCase):
@@ -572,8 +550,7 @@ class QualityRunnerTestMixin(object):
             optional_dict2=optional_dict2,
         )
         runner.run(parallelize=False)
-        result = runner.results[0]
-        return result
+        return runner.results[0]
 
     def run_each(self, score, runner_class, asset, optional_dict,
                  optional_dict2=None, result_store=None, places=5, **more):

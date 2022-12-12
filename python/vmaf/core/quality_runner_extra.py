@@ -19,7 +19,7 @@ class VmafQualityRunnerWithLocalExplainer(VmafQualityRunner):
 
     @classmethod
     def get_explanations_key(cls):
-        return cls.get_scores_key() + '_exps'
+        return f'{cls.get_scores_key()}_exps'
 
     @override(VmafQualityRunner)
     def _run_on_asset(self, asset):
@@ -33,14 +33,14 @@ class VmafQualityRunnerWithLocalExplainer(VmafQualityRunner):
         ys_pred = self.predict_with_model(model, xs)['ys_pred']
 
         if self.optional_dict2 is not None and \
-           'explainer' in self.optional_dict2:
+               'explainer' in self.optional_dict2:
             explainer = self.optional_dict2['explainer']
         else:
             explainer = LocalExplainer()
 
         exps = explainer.explain(model, xs)
         result_dict = {}
-        result_dict.update(feature_result.result_dict) # add feature result
+        result_dict |= feature_result.result_dict
         result_dict[self.get_scores_key()] = ys_pred # add quality score
         result_dict[self.get_explanations_key()] = exps # add local explanations
         return Result(asset, self.executor_id, result_dict)

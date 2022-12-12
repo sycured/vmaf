@@ -49,7 +49,7 @@ def project_path(relative_path):
 
 def required(path):
     if not os.path.exists(path):
-        raise AssertionError("%s does not exist, did you build?" % (path))
+        raise AssertionError(f"{path} does not exist, did you build?")
     return path
 
 
@@ -255,8 +255,8 @@ class ExternalProgramCaller(object):
             exe = required(ExternalProgram.vmafexec)
 
         vmafexec_cmd = "{exe} --reference {reference} --distorted {distorted} --width {width} --height {height} " \
-                     "--pixel_format {pixel_format} --bitdepth {bitdepth} --output {output}" \
-            .format(
+                         "--pixel_format {pixel_format} --bitdepth {bitdepth} --output {output}" \
+                .format(
             exe=exe,
             reference=reference,
             distorted=distorted,
@@ -289,7 +289,7 @@ class ExternalProgramCaller(object):
             assert models is not None
             assert isinstance(models, list)
             for model in models:
-                vmafexec_cmd += ' --model {}'.format(model)
+                vmafexec_cmd += f' --model {model}'
 
                 # FIXME: hacky - since we do not know which feature is the one used in the model,
                 # we have to set the parameter for all three, at the expense of extra computation.
@@ -305,11 +305,11 @@ class ExternalProgramCaller(object):
 
         assert isinstance(subsample, int) and subsample >= 1
         if subsample != 1:
-            vmafexec_cmd += ' --subsample {}'.format(subsample)
+            vmafexec_cmd += f' --subsample {subsample}'
 
         assert isinstance(n_threads, int) and n_threads >= 1
         if n_threads != 1:
-            vmafexec_cmd += ' --threads {}'.format(n_threads)
+            vmafexec_cmd += f' --threads {n_threads}'
 
         if disable_avx:
             vmafexec_cmd += ' --cpumask -1'

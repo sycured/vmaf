@@ -62,10 +62,11 @@ class FileSystemResultStore(ResultStore):
 
     def load(self, asset, executor_id):
         result_file_path = self._get_result_file_path2(asset, executor_id)
-        if not os.path.isfile(result_file_path):
-            return None
-        result = self.load_result(result_file_path)
-        return result
+        return (
+            self.load_result(result_file_path)
+            if os.path.isfile(result_file_path)
+            else None
+        )
 
     def has_workfile(self, asset: Asset, executor_id: str, suffix: str) -> bool:
         result_file_path = self._get_result_file_path2(asset, executor_id)

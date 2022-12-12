@@ -246,24 +246,7 @@ class AucPerfMetric(RawScorePerfMetric):
                 # pCC0_F[i-1, j-1] = fexact(CC_0[i-1]*L, 2*L, CC_0[i-1]*L + CC_0[j-1]*L, L, 'tail', 'b') / 2.0
                 # pCC0_F[j-1, i-1] = pCC0_F[i-1,j]
 
-        # # [pBW_HM,CI_BW] = significanceHM(B, W, AUC_BW);
-        # pBW_HM, CI_BW = significanceHM(B, W, AUC_BW)
-
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        # % Adding outputs to the structure
-
-        # results.AUC_DS = AUC_DS;
-        # results.pDS_DL = pDS_DL;
-        # results.pDS_HM = pDS_HM;
-        # results.AUC_BW = AUC_BW;
-        # results.pBW_DL = pBW_DL;
-        # results.pBW_HM = pBW_HM;
-        # results.CC_0 = CC_0;
-        # results.pCC0_b = pCC0_b;
-        # results.pCC0_F = pCC0_F;
-        # results.THR = THR;
-        result = {
+        return {
             'AUC_DS': AUC_DS,
             'pDS_DL': pDS_DL,
             # 'pDS_HM': pDS_HM,
@@ -275,21 +258,6 @@ class AucPerfMetric(RawScorePerfMetric):
             # 'pCC0_F': pCC0_F,
             'THR': THR,
         }
-
-        # %%%%%%%%%%%%%%%%%%%%%%%% Plot Results %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        #
-        # if(doPlot == 1)
-        #
-        # % Using Benjamini-Hochberg procedure for multiple comparisons in plots
-        # % (note: correlation between groups has to be positive)
-        #
-        # plot_auc(results.pDS_HM,results.AUC_DS, CI_DS, 'AUC (-)','Different/Similar')
-        # plot_cc(results.pCC0_F,results.CC_0,'C_0 (%)','Better/Worse')
-        # plot_auc(results.pBW_HM,results.AUC_BW, CI_BW, 'AUC (-)','Better/Worse')
-        #
-        # end
-
-        return result
 
     @classmethod
     def _evaluate(cls, groundtruths, predictions, **kwargs):
@@ -327,12 +295,8 @@ class AucPerfMetric(RawScorePerfMetric):
                 j += 1
             i += 1
 
-        if isinstance(predictions[0], list):
-            M = len(predictions)
-        else:
-            M = 1
-
-        objscodif_all = np.zeros([M, N * N])
+        M = len(predictions) if isinstance(predictions[0], list) else 1
+        objscodif_all = np.zeros([M, N**2])
         for metric_idx in range(M):
             objscodif_mtx = np.zeros([N, N])
 
@@ -350,7 +314,7 @@ class AucPerfMetric(RawScorePerfMetric):
                     j += 1
                 i += 1
 
-            objscodif_all[metric_idx, :] = objscodif_mtx.reshape(1, N * N)
+            objscodif_all[metric_idx, :] = objscodif_mtx.reshape(1, N**2)
 
         # import matplotlib.pyplot as plt
         # plt.figure()
@@ -363,23 +327,24 @@ class AucPerfMetric(RawScorePerfMetric):
         # plt.colorbar()
         # DisplayConfig.show()
 
-        results = cls._metrics_performance(objscodif_all, signif_mtx.reshape(1, N * N))
+        results = cls._metrics_performance(objscodif_all, signif_mtx.reshape(1, N**2))
         results['score'] = results['AUC_BW']
 
         if isinstance(predictions[0], list):
             return results
-        else:
-            result = {}
-            for key in results:
-                result[key] = results[key][0]
-            return result
+        result = {}
+        for key in results:
+            result[key] = results[key][0]
+        return result
 
     def _assert_args(self):
         if isinstance(self.predictions[0], list):
             for metric in self.predictions:
                 assert len(self.groundtruths) == len(metric), 'The lengths of groundtruth labels and predictions do not match.'
                 for score in metric:
-                    assert isinstance(score, float) or isinstance(score, int), 'Predictions need to be a list of lists of numbers.'
+                    assert isinstance(
+                        score, (float, int)
+                    ), 'Predictions need to be a list of lists of numbers.'
 
         else:
             assert len(self.groundtruths) == len(self.predictions), 'The lengths of groundtruth labels and predictions do not match.'
@@ -421,9 +386,7 @@ class ResolvingPowerPerfMetric(RawScorePerfMetric):
     @classmethod
     @override(PerfMetric)
     def _preprocess(cls, groundtruths, predictions, **kwargs):
-        enable_mapping = kwargs['enable_mapping'] if 'enable_mapping' in kwargs else False
-
-        if enable_mapping:
+        if enable_mapping := kwargs.get('enable_mapping', False):
             predictions_ = cls.sigmoid_adjust_raw(predictions, groundtruths)
         else:
             predictions_ = predictions
@@ -457,9 +420,9 @@ class ResolvingPowerPerfMetric(RawScorePerfMetric):
         # %   resolving_power(4) = 68% Resolving Power
 
         if isinstance(groundtruths, (list, tuple)) and isinstance(groundtruths[0], dict):
-            raise TypeError("{} cannot handle dictionary-style daataset yet.".format(cls.__name__))
+            raise TypeError(f"{cls.__name__} cannot handle dictionary-style daataset yet.")
 
-        deg_of_freedom = kwargs['ddof'] if 'ddof' in kwargs else 0
+        deg_of_freedom = kwargs.get('ddof', 0)
 
         vqm = np.array(predictions)
         num_viewers = np.array(list(map(lambda groundtruth: len(groundtruth), groundtruths)))
@@ -554,7 +517,7 @@ class ResolvingPowerPerfMetric(RawScorePerfMetric):
         #     mean_cdf_z_vqm(i) = mean(cdf_z_vqm(in_bin));
         # end
         mean_cdf_z_vqm = np.zeros(len_centers)
-        for i in range(0, len_centers):
+        for i in range(len_centers):
             in_bin = indices(delta_vqm, lambda x: low_limits[i] <= x < high_limits[i])
             if len(in_bin) == 0:
                 mean_cdf_z_vqm[i] = float('NaN')
@@ -625,13 +588,7 @@ class ResolvingPowerPerfMetric(RawScorePerfMetric):
         except ValueError:
             res_pow_95 = float('NaN')
 
-        # % return infinity if can't compute
-        # resolving_power(isnan(resolving_power)) = inf;
-
-        result = dict()
-        result['resolving_power_95perc'] = res_pow_95
-        result['score'] = res_pow_95
-        return result
+        return {'resolving_power_95perc': res_pow_95, 'score': res_pow_95}
 
 
 class AggrScorePerfMetric(PerfMetric):
@@ -663,8 +620,8 @@ class AggrScorePerfMetric(PerfMetric):
 
     @classmethod
     def _preprocess(cls, groundtruths, predictions, **kwargs):
-        aggre_method = kwargs['aggr_method'] if 'aggr_method' in kwargs else np.mean
-        enable_mapping = kwargs['enable_mapping'] if 'enable_mapping' in kwargs else False
+        aggre_method = kwargs.get('aggr_method', np.mean)
+        enable_mapping = kwargs.get('enable_mapping', False)
 
         groundtruths_ = list(map(
             lambda x: aggre_method(x) if hasattr(x, '__len__') else x,
@@ -686,8 +643,7 @@ class RmsePerfMetric(AggrScorePerfMetric):
     @classmethod
     def _evaluate(cls, groundtruths, predictions, **kwargs):
         rmse = np.sqrt(np.mean(np.power(np.array(groundtruths) - np.array(predictions), 2.0)))
-        result = {'score': rmse}
-        return result
+        return {'score': rmse}
 
 
 class SrccPerfMetric(AggrScorePerfMetric):
@@ -699,8 +655,7 @@ class SrccPerfMetric(AggrScorePerfMetric):
     def _evaluate(cls, groundtruths, predictions, **kwargs):
         # spearman
         srcc, _ = scipy.stats.spearmanr(groundtruths, predictions)
-        result = {'score': srcc}
-        return result
+        return {'score': srcc}
 
 
 class PccPerfMetric(AggrScorePerfMetric):
@@ -712,8 +667,7 @@ class PccPerfMetric(AggrScorePerfMetric):
     def _evaluate(cls, groundtruths, predictions, **kwargs):
         # pearson
         pcc, _ = scipy.stats.pearsonr(groundtruths, predictions)
-        result = {'score': pcc}
-        return result
+        return {'score': pcc}
 
 
 class KendallPerfMetric(AggrScorePerfMetric):
@@ -725,5 +679,4 @@ class KendallPerfMetric(AggrScorePerfMetric):
     def _evaluate(cls, groundtruths, predictions, **kwargs):
         # kendall
         kendall, _ = scipy.stats.kendalltau(groundtruths, predictions)
-        result = {'score': kendall}
-        return result
+        return {'score': kendall}

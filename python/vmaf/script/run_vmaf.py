@@ -28,9 +28,13 @@ POOL_METHODS = ['mean', 'harmonic_mean', 'min', 'median', 'perc5', 'perc10', 'pe
 
 
 def print_usage():
-    print("usage: " + os.path.basename(sys.argv[0]) \
-          + " fmt width height ref_path dis_path [--model model_path] [--out-fmt out_fmt] " \
-            "[--phone-model] [--ci] [--save-plot plot_dir]\n")
+    print(
+        (
+            f"usage: {os.path.basename(sys.argv[0])}"
+            + " fmt width height ref_path dis_path [--model model_path] [--out-fmt out_fmt] "
+            "[--phone-model] [--ci] [--save-plot plot_dir]\n"
+        )
+    )
     print("fmt:\n\t" + "\n\t".join(FMTS) + "\n")
     print("out_fmt:\n\t" + "\n\t".join(OUT_FMTS) + "\n")
 
@@ -62,17 +66,18 @@ def main():
     model_path = get_cmd_option(sys.argv, 6, len(sys.argv), '--model')
 
     out_fmt = get_cmd_option(sys.argv, 6, len(sys.argv), '--out-fmt')
-    if not (out_fmt is None
-            or out_fmt == 'xml'
-            or out_fmt == 'json'
-            or out_fmt == 'text'):
+    if (
+        out_fmt is not None
+        and out_fmt != 'xml'
+        and out_fmt != 'json'
+        and out_fmt != 'text'
+    ):
         print_usage()
         return 2
 
     pool_method = get_cmd_option(sys.argv, 6, len(sys.argv), '--pool')
-    if not (pool_method is None
-            or pool_method in POOL_METHODS):
-        print('--pool can only have option among {}'.format(', '.join(POOL_METHODS)))
+    if pool_method is not None and pool_method not in POOL_METHODS:
+        print(f"--pool can only have option among {', '.join(POOL_METHODS)}")
         return 2
 
     show_local_explanation = cmd_option_exists(sys.argv, 6, len(sys.argv), '--local-explain')
@@ -106,11 +111,7 @@ def main():
     else:
         runner_class = VmafQualityRunner
 
-    if model_path is None:
-        optional_dict = None
-    else:
-        optional_dict = {'model_filepath':model_path}
-
+    optional_dict = None if model_path is None else {'model_filepath':model_path}
     if phone_model:
         if optional_dict is None:
             optional_dict = {}
@@ -141,16 +142,13 @@ def main():
         result.set_score_aggregate_method(ListStats.perc10)
     elif pool_method == 'perc20':
         result.set_score_aggregate_method(ListStats.perc20)
-    else: # None or 'mean'
-        pass
-
     # output
     if out_fmt == 'xml':
         print(result.to_xml())
     elif out_fmt == 'json':
         print(result.to_json())
     else: # None or 'text'
-        print(str(result))
+        print(result)
 
     # local explanation
     if show_local_explanation:
