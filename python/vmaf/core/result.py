@@ -40,7 +40,7 @@ class BasicResult(object):
     @staticmethod
     def get_scores_key_from_score_key(score_key):
         # e.g. 'VMAF_scores'
-        return score_key + 's'
+        return f'{score_key}s'
 
     def _try_get_aggregate_score(self, key, error):
         """
@@ -65,18 +65,16 @@ class BasicResult(object):
                 # dimension assertion: scores should be either 1-D (one prediction per frame) or 2-D (single/multiple predictions per frame)
                 assert scores.ndim <= 2, 'Per frame score aggregation is not well-defined; scores cannot be saved in a N-D array with N > 2.'
 
-                # check if there are more than one models (first dimension)
-                if scores.ndim == 2:
-                    # check that there are > 1 models present
-                    assert scores.shape[0] > 1, '# models is <=1, but a 2D result array (models x frames) was used.'
-                    # check that there are >= 1 frames predicted
-                    assert scores.shape[1] >= 1, '# predicted frames is < 1.'
-                    # apply score aggregation on each individual model
-                    # a scores "piece" corresponds to a single model's predictions over all frames
-                    return [self.score_aggregate_method(scores_piece) for scores_piece in scores]
-                else:
+                if scores.ndim != 2:
                     # just one prediction per frame
                     return self.score_aggregate_method(scores)
+                # check that there are > 1 models present
+                assert scores.shape[0] > 1, '# models is <=1, but a 2D result array (models x frames) was used.'
+                # check that there are >= 1 frames predicted
+                assert scores.shape[1] >= 1, '# predicted frames is < 1.'
+                # apply score aggregation on each individual model
+                # a scores "piece" corresponds to a single model's predictions over all frames
+                return [self.score_aggregate_method(scores_piece) for scores_piece in scores]
         raise KeyError(error)
 
     def get_ordered_list_scores_key(self):
@@ -126,17 +124,26 @@ class BasicResult(object):
 
     def _get_aggregate_score_str(self):
         list_score_key = self.get_ordered_list_score_key()
-        str_aggregate = "Aggregate ({}): ".format(self.score_aggregate_method.__name__) + (", ".join(
-            list(map(
-                lambda tscore: "{score_key}:{score:.6f}".format(score_key=tscore[0], score=tscore[1]),
-                zip(
-                    list_score_key, list(map(
-                        lambda score_key: self[score_key],
-                        list_score_key)
-                ))
-            ))
-        ))
-        return str_aggregate
+        return f"Aggregate ({self.score_aggregate_method.__name__}): " + (
+            ", ".join(
+                list(
+                    map(
+                        lambda tscore: "{score_key}:{score:.6f}".format(
+                            score_key=tscore[0], score=tscore[1]
+                        ),
+                        zip(
+                            list_score_key,
+                            list(
+                                map(
+                                    lambda score_key: self[score_key],
+                                    list_score_key,
+                                )
+                            ),
+                        ),
+                    )
+                )
+            )
+        )
 
     @staticmethod
     def scores_key_wildcard_match(result_dict, scores_key):
@@ -216,11 +223,12 @@ class BasicResult(object):
                 return result_key
 
         # then look for wildcard match
-        matched_result_keys = []
-        for result_key in result_keys_sorted:
-            if result_key.startswith(scores_key[:-len('_scores')]):
-                matched_result_keys.append(result_key)
-        if len(matched_result_keys) == 0:
+        matched_result_keys = [
+            result_key
+            for result_key in result_keys_sorted
+            if result_key.startswith(scores_key[: -len('_scores')])
+        ]
+        if not matched_result_keys:
             raise KeyError(f"no key matches {scores_key}")
         elif len(matched_result_keys) == 1:
             return matched_result_keys[0]
@@ -261,10 +269,10 @@ class Result(BasicResult):
         if self.executor_id != other.executor_id:
             return False
         list_scores_key = self.get_ordered_list_scores_key()
-        for scores_key in list_scores_key:
-            if self.result_dict[scores_key] != other.result_dict[scores_key]:
-                return False
-        return True
+        return all(
+            self.result_dict[scores_key] == other.result_dict[scores_key]
+            for scores_key in list_scores_key
+        )
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -302,10 +310,8 @@ class Result(BasicResult):
         Frame 2: SSIM_feature_ssim_c_score:0.997404, SSIM_feature_ssim_l_score:0.965514, SSIM_feature_ssim_s_score:0.935804, SSIM_score:0.901163
         Aggregate: SSIM_feature_ssim_c_score:0.997404, SSIM_feature_ssim_l_score:0.965513, SSIM_feature_ssim_s_score:0.935803, SSIM_score:0.901161
         """
-        s = ""
-        s += 'Asset: {}\n'.format( # unlike repr(asset), print workdir
-            self.asset.to_full_repr())
-        s += 'Executor: {}\n'.format(self.executor_id)
+        s = f'Asset: {self.asset.to_full_repr()}\n'
+        s += f'Executor: {self.executor_id}\n'
         s += 'Result:\n'
         s += self._get_scores_str()
         s += self._get_aggregate_score_str()
@@ -386,7 +392,7 @@ class Result(BasicResult):
 
         frames = top.find('frames')
 
-        for frame_ind, frame in enumerate(frames):
+        for frame in frames:
             for score_key, score_value in frame.attrib.items():
                 if 'score' in score_key:
                     # same convention of 'score' and 'scores' as in _try_get_aggregate_score
@@ -411,7 +417,7 @@ class Result(BasicResult):
 
         frames = json_data['frames']
 
-        for frame_ind, frame in enumerate(frames):
+        for frame in frames:
             for score_key, score_value in frame.items():
                 if 'score' in score_key:
                     # same convention of 'score' and 'scores' as in _try_get_aggregate_score
@@ -434,7 +440,7 @@ class Result(BasicResult):
         executor_id = executor_ids[0]
         combined_result_dict = OrderedDict()
 
-        sorted_scores_keys = sorted([key for key in results[0].result_dict.keys()], reverse=True)
+        sorted_scores_keys = sorted(list(results[0].result_dict.keys()), reverse=True)
 
         # initialize dictionary
         for scores_key in sorted_scores_keys:
@@ -443,7 +449,10 @@ class Result(BasicResult):
         for result in results:
             result_dict  = result.result_dict
             # assert if the keys in result_dict match
-            assert sorted([key for key in result_dict.keys()], reverse=True) == sorted_scores_keys, "Score keys do not match."
+            assert (
+                sorted(list(result_dict.keys()), reverse=True)
+                == sorted_scores_keys
+            ), "Score keys do not match."
             for scores_key in sorted_scores_keys:
                 combined_result_dict[scores_key] += list(result_dict[scores_key])
 
@@ -590,10 +599,7 @@ class Result(BasicResult):
                    scores]
             rows.append(row)
 
-        # zip rows into a dict, and wrap with df
-        df = pd.DataFrame(dict(zip(self.DATAFRAME_COLUMNS, zip(*rows))))
-
-        return df
+        return pd.DataFrame(dict(zip(self.DATAFRAME_COLUMNS, zip(*rows))))
 
     @classmethod
     def from_dataframe(cls, df):
@@ -606,10 +612,7 @@ class Result(BasicResult):
 
         executor_id = df.iloc[0]['executor_id']
 
-        result_dict = {}
-        for _, row in df.iterrows():
-            result_dict[row['scores_key']] = row['scores']
-
+        result_dict = {row['scores_key']: row['scores'] for _, row in df.iterrows()}
         return Result(asset, executor_id, result_dict)
 
     @classmethod

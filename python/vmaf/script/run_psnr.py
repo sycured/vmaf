@@ -54,17 +54,18 @@ def main():
         return 2
 
     out_fmt = get_cmd_option(sys.argv, 6, len(sys.argv), '--out-fmt')
-    if not (out_fmt is None
-            or out_fmt == 'xml'
-            or out_fmt == 'json'
-            or out_fmt == 'text'):
+    if (
+        out_fmt is not None
+        and out_fmt != 'xml'
+        and out_fmt != 'json'
+        and out_fmt != 'text'
+    ):
         print_usage()
         return 2
 
     pool_method = get_cmd_option(sys.argv, 6, len(sys.argv), '--pool')
-    if not (pool_method is None
-            or pool_method in POOL_METHODS):
-        print('--pool can only have option among {}'.format(', '.join(POOL_METHODS)))
+    if pool_method is not None and pool_method not in POOL_METHODS:
+        print(f"--pool can only have option among {', '.join(POOL_METHODS)}")
         return 2
 
     asset = Asset(dataset="cmd", content_id=0, asset_id=0,
@@ -102,16 +103,13 @@ def main():
         result.set_score_aggregate_method(ListStats.perc10)
     elif pool_method == 'perc20':
         result.set_score_aggregate_method(ListStats.perc20)
-    else: # None or 'mean'
-        pass
-
     # output
     if out_fmt == 'xml':
         print(result.to_xml())
     elif out_fmt == 'json':
         print(result.to_json())
     else:  # None or 'text'
-        print(str(result))
+        print(result)
 
     return 0
 

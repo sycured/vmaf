@@ -49,7 +49,12 @@ class FeatureExtractorTest(MyTestCase):
         fextractor = VmafFeatureExtractor([asset], None)
         log_file_path = fextractor._get_log_file_path(asset)
         h = hashlib.sha1("test_0_1_refvideo_720x480_vs_disvideo_720x480_q_720x480".encode("utf-8")).hexdigest()
-        self.assertTrue(re.match(r"^my_workdir_root/[a-zA-Z0-9-]+/VMAF_feature_V0.2.7_{}$".format(h), log_file_path))
+        self.assertTrue(
+            re.match(
+                f"^my_workdir_root/[a-zA-Z0-9-]+/VMAF_feature_V0.2.7_{h}$",
+                log_file_path,
+            )
+        )
 
     def test_run_vmaf_fextractor(self):
 

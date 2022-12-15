@@ -34,19 +34,19 @@ class RegressorMixin(object):
 
         # RMSE
         rmse = RmsePerfMetric(ys_label, ys_label_pred) \
-            .evaluate(enable_mapping=True)['score']
+                .evaluate(enable_mapping=True)['score']
 
         # spearman
         srcc = SrccPerfMetric(ys_label, ys_label_pred) \
-            .evaluate(enable_mapping=True)['score']
+                .evaluate(enable_mapping=True)['score']
 
         # pearson
         pcc = PccPerfMetric(ys_label, ys_label_pred) \
-            .evaluate(enable_mapping=True)['score']
+                .evaluate(enable_mapping=True)['score']
 
         # kendall
         kendall = KendallPerfMetric(ys_label, ys_label_pred) \
-            .evaluate(enable_mapping=True)['score']
+                .evaluate(enable_mapping=True)['score']
 
         stats = {'RMSE': rmse,
                  'SRCC': srcc,
@@ -67,11 +67,11 @@ class RegressorMixin(object):
 
             for ys_label_pred_some_model in ys_label_pred_all_models:
                 srcc_some_model = SrccPerfMetric(ys_label, ys_label_pred_some_model) \
-                    .evaluate(enable_mapping=True)['score']
+                        .evaluate(enable_mapping=True)['score']
                 pcc_some_model = PccPerfMetric(ys_label, ys_label_pred_some_model) \
-                    .evaluate(enable_mapping=True)['score']
+                        .evaluate(enable_mapping=True)['score']
                 rmse_some_model = RmsePerfMetric(ys_label, ys_label_pred_some_model) \
-                    .evaluate(enable_mapping=True)['score']
+                        .evaluate(enable_mapping=True)['score']
                 srcc_all_models.append(srcc_some_model)
                 pcc_all_models.append(pcc_some_model)
                 rmse_all_models.append(rmse_some_model)
@@ -80,17 +80,17 @@ class RegressorMixin(object):
             stats['PCC_across_model_distribution'] = pcc_all_models
             stats['RMSE_across_model_distribution'] = rmse_all_models
 
-        split_test_indices_for_perf_ci = kwargs['split_test_indices_for_perf_ci'] \
-            if 'split_test_indices_for_perf_ci' in kwargs else False
+        split_test_indices_for_perf_ci = kwargs.get(
+            'split_test_indices_for_perf_ci', False
+        )
 
-        ys_label_raw = kwargs['ys_label_raw'] if 'ys_label_raw' in kwargs else None
+        ys_label_raw = kwargs.get('ys_label_raw')
 
         if ys_label_raw is not None:
 
             ys_label_raw_list = []
             if isinstance(ys_label_raw[0], dict):
-                for d in ys_label_raw:
-                    ys_label_raw_list.append(list(d.values()))
+                ys_label_raw_list.extend(list(d.values()) for d in ys_label_raw)
             else:
                 ys_label_raw_list = ys_label_raw
 
@@ -106,7 +106,7 @@ class RegressorMixin(object):
             try:
                 # ResPow
                 respow = ResolvingPowerPerfMetric(ys_label_raw_list, ys_label_pred) \
-                    .evaluate(enable_mapping=False)['score']
+                        .evaluate(enable_mapping=False)['score']
                 stats['ResPow'] = respow
             except (TypeError, AssertionError):
                 stats['ResPow'] = float('nan')
@@ -114,12 +114,12 @@ class RegressorMixin(object):
             try:
                 # ResPow
                 respow_norm = ResolvingPowerPerfMetric(ys_label_raw_list, ys_label_pred) \
-                    .evaluate(enable_mapping=True)['score']
+                        .evaluate(enable_mapping=True)['score']
                 stats['ResPowNormalized'] = respow_norm
             except (TypeError, AssertionError):
                 stats['ResPowNormalized'] = float('nan')
 
-        if 'ys_label_stddev' in kwargs and 'ys_label_stddev' and kwargs['ys_label_stddev'] is not None:
+        if 'ys_label_stddev' in kwargs and kwargs['ys_label_stddev'] is not None:
             stats['ys_label_stddev'] = kwargs['ys_label_stddev']
 
         if split_test_indices_for_perf_ci:
@@ -132,8 +132,9 @@ class RegressorMixin(object):
 
             # replicate logic of BootstrapVmafQualityRunner
             sample_size = len(ys_label)
-            n_splits_test_indices = kwargs['n_splits_test_indices'] if 'n_splits_test_indices' in kwargs \
-                else cls.DEFAULT_N_SPLITS_TEST_INDICES
+            n_splits_test_indices = kwargs.get(
+                'n_splits_test_indices', cls.DEFAULT_N_SPLITS_TEST_INDICES
+            )
 
             srcc_distribution = []
             pcc_distribution = []
@@ -167,30 +168,28 @@ class RegressorMixin(object):
     def format_stats_for_plot(stats):
         if stats is None:
             return '(Invalid Stats)'
-        else:
-            if 'AUC_DS' in stats and 'AUC_BW' in stats and 'ResPow' in stats and 'ResPowNormalized' in stats:
-                return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f},\n AUC: {auc_ds:.3f}/{auc_bw:.3f}, ' \
+        if 'AUC_DS' in stats and 'AUC_BW' in stats and 'ResPow' in stats and 'ResPowNormalized' in stats:
+            return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f},\n AUC: {auc_ds:.3f}/{auc_bw:.3f}, ' \
                        'ResPow: {respow:.3f}/{respownorm:.3f})'. \
                     format(srcc=stats['SRCC'], pcc=stats['PCC'], rmse=stats['RMSE'],
-                           auc_ds=stats['AUC_DS'], auc_bw=stats['AUC_BW'],
-                           respow=stats['ResPow'], respownorm=stats['ResPowNormalized'])
-            else:
-                return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f})'. \
+                       auc_ds=stats['AUC_DS'], auc_bw=stats['AUC_BW'],
+                       respow=stats['ResPow'], respownorm=stats['ResPowNormalized'])
+        else:
+            return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f})'. \
                     format(srcc=stats['SRCC'], pcc=stats['PCC'], rmse=stats['RMSE'])
 
     @staticmethod
     def format_stats_for_print(stats):
         if stats is None:
             return '(Invalid Stats)'
-        else:
-            if 'AUC_DS' in stats and 'AUC_BW' in stats and 'ResPow' in stats and 'ResPowNormalized' in stats:
-                return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f}, AUC: {auc_ds:.3f}/{auc_bw:.3f}, ' \
+        if 'AUC_DS' in stats and 'AUC_BW' in stats and 'ResPow' in stats and 'ResPowNormalized' in stats:
+            return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f}, AUC: {auc_ds:.3f}/{auc_bw:.3f}, ' \
                        'ResPow: {respow:.3f}/{respownorm:.3f})'. \
                     format(srcc=stats['SRCC'], pcc=stats['PCC'], rmse=stats['RMSE'],
-                           auc_ds=stats['AUC_DS'], auc_bw=stats['AUC_BW'],
-                           respow=stats['ResPow'], respownorm=stats['ResPowNormalized'])
-            else:
-                return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f})'. \
+                       auc_ds=stats['AUC_DS'], auc_bw=stats['AUC_BW'],
+                       respow=stats['ResPow'], respownorm=stats['ResPowNormalized'])
+        else:
+            return '(SRCC: {srcc:.3f}, PCC: {pcc:.3f}, RMSE: {rmse:.3f})'. \
                     format(srcc=stats['SRCC'], pcc=stats['PCC'], rmse=stats['RMSE'])
 
     @staticmethod
@@ -284,23 +283,23 @@ class RegressorMixin(object):
         try:
             ys_label_stddev[np.isnan(ys_label_stddev)] = 0
         except:
-            ys_label_stddev[ys_label_stddev == None] = 0
+            ys_label_stddev[ys_label_stddev is None] = 0
         assert len(ys_label_stddev) == len(ys_label)
 
         xlim, ylim = cls.get_xlim_ylim(ys_label, ys_label_pred, ys_label_stddev)
-        content_ids = kwargs['content_ids'] if 'content_ids' in kwargs else None
+        content_ids = kwargs.get('content_ids')
         if content_ids is not None:
             assert len(content_ids) == len(ys_label)
-        point_labels = kwargs['point_labels'] if 'point_labels' in kwargs else None
+        point_labels = kwargs.get('point_labels')
         if point_labels is not None:
             assert len(point_labels) == len(ys_label)
-        plot_linear_fit = kwargs['plot_linear_fit'] if 'plot_linear_fit' in kwargs else False
+        plot_linear_fit = kwargs.get('plot_linear_fit', False)
         assert isinstance(plot_linear_fit, bool)
 
-        do_plot = kwargs['do_plot'] if 'do_plot' in kwargs else ['aggregate']
+        do_plot = kwargs.get('do_plot', ['aggregate'])
         accepted_options = ['aggregate', 'per_content', 'groundtruth_predicted_in_parallel']
         assert isinstance(do_plot, list), f"do_plot needs to be a list of plotting options. Accepted options are " \
-                                          f"{accepted_options}"
+                                              f"{accepted_options}"
 
         for option in do_plot:
             assert option in accepted_options, f"{option} is not in {accepted_options}"
@@ -406,16 +405,16 @@ class RegressorMixin(object):
         :param type:
         :return:
         """
-        if type == 'SRCC':
-            return result['SRCC']
+        if type == 'KENDALL':
+            return result['KENDALL']
         elif type == 'PCC':
             return result['PCC']
-        elif type == 'KENDALL':
-            return result['KENDALL']
         elif type == 'RMSE':
             return -result['RMSE']
+        elif type == 'SRCC':
+            return result['SRCC']
         else:
-            assert False, 'Unknow type: {} for get_objective_score().'.format(type)
+            assert False, f'Unknow type: {type} for get_objective_score().'
 
 
 class ClassifierMixin(object):
@@ -434,12 +433,13 @@ class ClassifierMixin(object):
         f1 = f1_score(ys_label_pred, ys_label)
         # error rate
         errorrate = np.mean(np.array(ys_label) != np.array(ys_label_pred))
-        stats = {'RMSE': rmse,
-                 'f1': f1,
-                 'errorrate': errorrate,
-                 'ys_label': list(ys_label),
-                 'ys_label_pred': list(ys_label_pred)}
-        return stats
+        return {
+            'RMSE': rmse,
+            'f1': f1,
+            'errorrate': errorrate,
+            'ys_label': list(ys_label),
+            'ys_label_pred': list(ys_label_pred),
+        }
 
     @staticmethod
     def format_stats(stats):
@@ -474,14 +474,14 @@ class ClassifierMixin(object):
         :param type:
         :return:
         """
-        if type == 'f1':
-            return result['f1']
+        if type == 'RMSE':
+            return -result['RMSE']
         elif type == 'errorrate':
             return -result['errorrate']
-        elif type == 'RMSE':
-            return -result['RMSE']
+        elif type == 'f1':
+            return result['f1']
         else:
-            assert False, 'Unknow type: {} for get_objective_score().'.format(type)
+            assert False, f'Unknow type: {type} for get_objective_score().'
 
 
 class TrainTestModel(TypeVersionEnabled):
@@ -526,7 +526,7 @@ class TrainTestModel(TypeVersionEnabled):
         assert 'model' in self.model_dict
 
         norm_type = self.model_dict['norm_type']
-        assert norm_type == 'none' or norm_type == 'linear_rescale'
+        assert norm_type in ['none', 'linear_rescale']
 
         if norm_type == 'linear_rescale':
             assert 'slopes' in self.model_dict
@@ -633,7 +633,7 @@ class TrainTestModel(TypeVersionEnabled):
 
     @staticmethod
     def _to_file(filename, param_dict, model_dict, **more):
-        format = more['format'] if 'format' in more else 'pkl'
+        format = more.get('format', 'pkl')
         assert format in ['pkl'], f'format must be pkl, but got: {format}'
 
         info_to_save = {'param_dict': param_dict,
@@ -644,11 +644,11 @@ class TrainTestModel(TypeVersionEnabled):
 
     @classmethod
     def from_file(cls, filename, logger=None, optional_dict2=None, **more):
-        format = more['format'] if 'format' in more else 'pkl'
+        format = more.get('format', 'pkl')
         supported_format = ['pkl', 'json']
         assert format in supported_format, f'format must be in {supported_format} but is {format}'
 
-        assert os.path.exists(filename), 'File name {} does not exist.'.format(filename)
+        assert os.path.exists(filename), f'File name {filename} does not exist.'
 
         if format == 'pkl':
             with open(filename, 'rb') as file:
@@ -661,20 +661,17 @@ class TrainTestModel(TypeVersionEnabled):
 
         model_type = info_loaded['model_dict']['model_type']
         model_class = TrainTestModel.find_subclass(model_type)
-        if model_class == cls:
-            train_test_model = model_class._from_info_loaded(info_loaded, filename,
-                                                             logger, optional_dict2, **more)
-        else:
-            # the newly found model_class can be a different class (e.g. a
-            # subclass of cls). In this case, call from_file() of that
-            # model_class.
-            train_test_model = model_class.from_file(filename, logger, optional_dict2, **more)
-
-        return train_test_model
+        return (
+            model_class._from_info_loaded(
+                info_loaded, filename, logger, optional_dict2, **more
+            )
+            if model_class == cls
+            else model_class.from_file(filename, logger, optional_dict2, **more)
+        )
 
     @classmethod
     def _from_info_loaded(cls, info_loaded, filename, logger, optional_dict2, **more):
-        format = more['format'] if 'format' in more else 'pkl'
+        format = more.get('format', 'pkl')
         supported_format = ['pkl']
         assert format in supported_format, f'format must be in {supported_format} but is {format}'
 
@@ -685,8 +682,7 @@ class TrainTestModel(TypeVersionEnabled):
         return train_test_model
 
     def _preproc_train(self, xys, **kwargs):
-        feature_option_dict = kwargs['feature_option_dict'] \
-            if 'feature_option_dict' in kwargs else None
+        feature_option_dict = kwargs.get('feature_option_dict')
         self.model_type = self.TYPE
         assert 'label' in xys
         assert 'content_id' in xys
@@ -741,11 +737,11 @@ class TrainTestModel(TypeVersionEnabled):
         """
         feature_opts_dicts = []
         for feature_name in feature_names:
-            d = dict()
+            d = {}
             for aggr_feature, aggr_feature_d in feature_option_dict.items():
                 for opt_key, opt_val in aggr_feature_d.items():
                     if aggr_feature.split('_')[0] in aggr_feature \
-                            and opt_key.split('_')[0] in feature_name:
+                                and opt_key.split('_')[0] in feature_name:
                         d[opt_key] = opt_val
             feature_opts_dicts.append(d)
         return feature_opts_dicts
@@ -753,18 +749,10 @@ class TrainTestModel(TypeVersionEnabled):
     def _calculate_normalization_params(self, xys_2d):
 
         norm_type = self.param_dict['norm_type'] \
-            if 'norm_type' in self.param_dict else 'none'
+                if 'norm_type' in self.param_dict else 'none'
 
-        if norm_type == 'normalize':
-            mus = np.mean(xys_2d, axis=0)
-            sds = np.std(xys_2d, axis=0)
-            self.slopes = 1.0 / sds
-            self.intercepts = - mus / sds
-            self.norm_type = 'linear_rescale'
-        elif norm_type == 'clip_0to1':
+        if norm_type == 'clip_0to1':
             self._calculate_normalization_params_clip_0to1(xys_2d)
-        elif norm_type == 'custom_clip_0to1':
-            self._calculate_normalization_params_custom_clip_0to1(xys_2d)
         elif norm_type == 'clip_minus1to1':
             ub = 1.0
             lb = -1.0
@@ -773,11 +761,20 @@ class TrainTestModel(TypeVersionEnabled):
             self.slopes = (ub - lb) / (fmaxs - fmins)
             self.intercepts = (lb*fmaxs - ub*fmins) / (fmaxs - fmins)
             self.norm_type = 'linear_rescale'
+        elif norm_type == 'custom_clip_0to1':
+            self._calculate_normalization_params_custom_clip_0to1(xys_2d)
         elif norm_type == 'none':
             self.norm_type = 'none'
+        elif norm_type == 'normalize':
+            mus = np.mean(xys_2d, axis=0)
+            sds = np.std(xys_2d, axis=0)
+            self.slopes = 1.0 / sds
+            self.intercepts = - mus / sds
+            self.norm_type = 'linear_rescale'
         else:
-            assert False, 'Incorrect parameter norm type selected: {}' \
-                .format(self.param_dict['norm_type'])
+            assert (
+                False
+            ), f"Incorrect parameter norm type selected: {self.param_dict['norm_type']}"
 
     def _calculate_normalization_params_clip_0to1(self, xys_2d):
         ub = 1.0

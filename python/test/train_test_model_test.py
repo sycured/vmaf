@@ -93,7 +93,7 @@ class TrainTestModelTest(unittest.TestCase):
 
         self.model.to_file(self.model_filename)
         self.assertTrue(os.path.exists(self.model_filename))
-        self.assertTrue(os.path.exists(self.model_filename + '.model'))
+        self.assertTrue(os.path.exists(f'{self.model_filename}.model'))
 
         loaded_model = LibsvmNusvrTrainTestModel.from_file(self.model_filename, None)
 
@@ -315,9 +315,9 @@ class TrainTestModelTest(unittest.TestCase):
         ys = Logistic5PLRegressionTrainTestModel.get_ys_from_results(self.features, [0, 1, 2, 3, 4, 5])
 
         xys = {}
-        xys.update(xs)
+        xys |= xs
         xys.update(ys)
-        
+
         model = Logistic5PLRegressionTrainTestModel({'norm_type': 'clip_0to1'}, None)
         model.train(xys)
         result = model.evaluate(xs, ys)
@@ -513,7 +513,7 @@ class TrainTestModelTestJson(unittest.TestCase):
 
         self.model.to_file(self.model_filename_json, format='json')
         self.assertTrue(os.path.exists(self.model_filename_json))
-        self.assertFalse(os.path.exists(self.model_filename_json + '.model'))
+        self.assertFalse(os.path.exists(f'{self.model_filename_json}.model'))
 
         loaded_model = LibsvmNusvrTrainTestModel.from_file(
             self.model_filename_json, logger=None, format='json')

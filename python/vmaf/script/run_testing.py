@@ -31,11 +31,15 @@ SUBJECTIVE_MODELS = ['DMOS', 'DMOS_MLE', 'MLE', 'MLE_CO_AP',
 
 def print_usage():
     quality_runner_types = ['VMAF', 'PSNR', 'SSIM', 'MS_SSIM', '...']
-    print("usage: " + os.path.basename(sys.argv[0]) + \
-          " quality_type test_dataset_filepath [--vmaf-model VMAF_model_path] " \
-          "[--vmaf-phone-model] [--subj-model subjective_model] [--cache-result] " \
-          "[--parallelize] [--print-result] [--save-plot plot_dir] [--plot-wh plot_wh] "
-          "[--processes processes]\n")
+    print(
+        (
+            f"usage: {os.path.basename(sys.argv[0])}"
+            + " quality_type test_dataset_filepath [--vmaf-model VMAF_model_path] "
+            "[--vmaf-phone-model] [--subj-model subjective_model] [--cache-result] "
+            "[--parallelize] [--print-result] [--save-plot plot_dir] [--plot-wh plot_wh] "
+            "[--processes processes]\n"
+        )
+    )
     print("quality_type:\n\t" + "\n\t".join(quality_runner_types) +"\n")
     print("subjective_model:\n\t" + "\n\t".join(SUBJECTIVE_MODELS) + "\n")
     print("plot_wh: plot width and height in inches, example: 5x5 (default)")
@@ -63,9 +67,8 @@ def main():
     vmaf_phone_model = cmd_option_exists(sys.argv, 3, len(sys.argv), '--vmaf-phone-model')
 
     pool_method = get_cmd_option(sys.argv, 3, len(sys.argv), '--pool')
-    if not (pool_method is None
-            or pool_method in POOL_METHODS):
-        print('--pool can only have option among {}'.format(', '.join(POOL_METHODS)))
+    if pool_method is not None and pool_method not in POOL_METHODS:
+        print(f"--pool can only have option among {', '.join(POOL_METHODS)}")
         return 2
 
     subj_model = get_cmd_option(sys.argv, 3, len(sys.argv), '--subj-model')
@@ -77,7 +80,7 @@ def main():
         else:
             subj_model_class = SubjectiveModel.find_subclass('MLE_CO_AP2')
     except Exception as e:
-        print("Error: " + str(e))
+        print(f"Error: {str(e)}")
         return 1
 
     save_plot_dir = get_cmd_option(sys.argv, 3, len(sys.argv), '--save-plot')
@@ -87,8 +90,8 @@ def main():
         try:
             mo = re.match(r"([0-9]+)x([0-9]+)", plot_wh)
             assert mo is not None
-            w = mo.group(1)
-            h = mo.group(2)
+            w = mo[1]
+            h = mo[2]
             w = int(w)
             h = int(h)
             plot_wh = (w, h)
@@ -99,7 +102,7 @@ def main():
     try:
         runner_class = QualityRunner.find_subclass(quality_type)
     except Exception as e:
-        print("Error: " + str(e))
+        print(f"Error: {str(e)}")
         return 1
 
     if vmaf_model_path is not None and runner_class != VmafQualityRunner and \
@@ -124,35 +127,27 @@ def main():
     try:
         test_dataset = import_python_file(test_dataset_filepath)
     except Exception as e:
-        print("Error: " + str(e))
+        print(f"Error: {str(e)}")
         return 1
 
-    if cache_result:
-        result_store = FileSystemResultStore()
-    else:
-        result_store = None
-
+    result_store = FileSystemResultStore() if cache_result else None
     # pooling
     if pool_method == 'harmonic_mean':
         aggregate_method = ListStats.harmonic_mean
-    elif pool_method == 'min':
-        aggregate_method = np.min
     elif pool_method == 'median':
         aggregate_method = np.median
-    elif pool_method == 'perc5':
-        aggregate_method = ListStats.perc5
+    elif pool_method == 'min':
+        aggregate_method = np.min
     elif pool_method == 'perc10':
         aggregate_method = ListStats.perc10
     elif pool_method == 'perc20':
         aggregate_method = ListStats.perc20
-    else: # None or 'mean'
+    elif pool_method == 'perc5':
+        aggregate_method = ListStats.perc5
+    else:
         aggregate_method = np.mean
 
-    if vmaf_phone_model:
-        enable_transform_score = True
-    else:
-        enable_transform_score = None
-
+    enable_transform_score = True if vmaf_phone_model else None
     try:
         if suppress_plot:
             raise AssertionError

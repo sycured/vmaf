@@ -13,7 +13,7 @@ __license__ = "BSD+Patent"
 
 
 def print_usage():
-    print("usage: python " + os.path.basename(sys.argv[0]) + " input_file\n")
+    print(f"usage: python {os.path.basename(sys.argv[0])}" + " input_file\n")
     print("input_file contains a list of files for assembly (can be xml or json)")
 
 
@@ -32,12 +32,11 @@ class FileAssembler:
             to_assemble_list = to_assemble_input
         else:
             with open(to_assemble_input, "rt") as input_file:
-                for line in input_file.readlines():
-
+                for line in input_file:
                     # match comment
                     mo = re.match(r"^#", line)
                     if mo:
-                        print("Skip commented line: {}".format(line))
+                        print(f"Skip commented line: {line}")
                         continue
 
                     # match whitespace
@@ -47,7 +46,7 @@ class FileAssembler:
 
                     mo = re.match(r"([\S]+)", line)
                     if not mo:
-                        print("Invalid file: {}".format(line))
+                        print(f"Invalid file: {line}")
                         print_usage()
                         return 1
 
@@ -65,9 +64,7 @@ class FileAssembler:
         to_assemble_list = self.create_assembly_file_list(self.to_assemble_input)
         self._assert(to_assemble_list)
         results = self._create_result_list(to_assemble_list)
-        combined_result = Result.combine_result(results)
-
-        return combined_result
+        return Result.combine_result(results)
 
     def _assert(self, to_assemble_list):
         """
@@ -100,11 +97,10 @@ class XmlAssembler(FileAssembler):
 
         to_assemble_xml_strings = self._parse_files(to_assemble_list)
 
-        results = []
-        for to_assemble_xml_string in to_assemble_xml_strings:
-            results.append(Result.from_xml(to_assemble_xml_string))
-
-        return results
+        return [
+            Result.from_xml(to_assemble_xml_string)
+            for to_assemble_xml_string in to_assemble_xml_strings
+        ]
 
 
 class JsonAssembler(FileAssembler):

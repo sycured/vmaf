@@ -37,12 +37,12 @@ def plot_distribution(plot_type, df, key, slice_name, slices, colors=None, ax=No
             ys, xs = get_pdf(data)
             plt.ylabel('PDF')
         else:
-            assert False, "Unknown plot type: {}".format(plot_type)
+            assert False, f"Unknown plot type: {plot_type}"
         if ax:
-            ax.plot(xs, ys, label="{}".format(str(slice)), color=color)
+            ax.plot(xs, ys, label=f"{str(slice)}", color=color)
             ax.grid(which='major')
         else:
-            plt.plot(xs, ys, label="{}".format(str(slice)), color=color)
+            plt.plot(xs, ys, label=f"{str(slice)}", color=color)
             plt.grid(which='major')
 
 def plot_distribution_fit(plot_type, df, key, slice_name, slices, colors=None, ax=None, distribution_fcn=norm, collate_data=True, **kwargs):
@@ -73,7 +73,7 @@ def _plot_distribution_fit(ax, data, distribution_fcn, plot_type, tag, color, **
     xmax = max(data)
     xs = np.linspace(xmin, xmax)
 
-    fit_params = kwargs['fit_params'] if 'fit_params' in kwargs else dict()
+    fit_params = kwargs.get('fit_params', {})
 
     params = distribution_fcn.fit(data, **fit_params)
     if plot_type == 'cdf':
@@ -83,7 +83,7 @@ def _plot_distribution_fit(ax, data, distribution_fcn, plot_type, tag, color, **
         ys = distribution_fcn.pdf(xs, *params)
         plt.ylabel('PDF')
     else:
-        assert False, "Unknown plot type: {}".format(plot_type)
+        assert False, f"Unknown plot type: {plot_type}"
     label = "{tag} {dis_name} fit {param}".format(
         tag=tag, dis_name=distribution_fcn.name,
         param=', '.join(map(lambda p: "{:.4f}".format(p), params)))

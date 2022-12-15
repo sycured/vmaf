@@ -151,10 +151,7 @@ class NeuralNetTrainTestModel(RawVideoTrainTestModelMixin,
             sys.stdout.flush()
 
             # create single x
-            x = {}
-            for feature_name in feature_names:
-                x[feature_name] = [xs[feature_name][i]]
-
+            x = {feature_name: [xs[feature_name][i]] for feature_name in feature_names}
             # extract patches
             patches_cache = self._populate_patches(feature_names, x)
 
@@ -277,7 +274,7 @@ class NeuralNetTrainTestModel(RawVideoTrainTestModelMixin,
 
         saver = tf.train.Saver()
         sess = self.model['sess']
-        saver.save(sess, filename + '.model')
+        saver.save(sess, f'{filename}.model')
 
         with open(filename, 'wb') as file:
             pickle.dump(info_to_save, file)
@@ -285,10 +282,10 @@ class NeuralNetTrainTestModel(RawVideoTrainTestModelMixin,
     @classmethod
     @override(TrainTestModel)
     def from_file(cls, filename, logger=None, optional_dict2=None, **more):
-        format = more['format'] if 'format' in more else 'pkl'
+        format = more.get('format', 'pkl')
         assert format in ['pkl'], f'format must be pkl but got {format}'
 
-        assert os.path.exists(filename), 'File name {} does not exist.'.format(filename)
+        assert os.path.exists(filename), f'File name {filename} does not exist.'
         with open(filename, 'rb') as file:
             info_loaded = pickle.load(file)
 
@@ -300,7 +297,7 @@ class NeuralNetTrainTestModel(RawVideoTrainTestModelMixin,
         # == special handling of tensorflow: load .model differently ==
 
         input_image_batch, logits, y_, y_p, W_conv0, W_conv1, loss, train_step \
-            = cls.create_tf_variables(train_test_model.param_dict)
+                = cls.create_tf_variables(train_test_model.param_dict)
 
         saver = tf.train.Saver()
         sess = tf.Session()
@@ -322,18 +319,18 @@ class NeuralNetTrainTestModel(RawVideoTrainTestModelMixin,
     @staticmethod
     @override(TrainTestModel)
     def delete(filename, **more):
-        format = more['format'] if 'format' in more else 'pkl'
+        format = more.get('format', 'pkl')
         assert format in ['pkl'], f'format must be pkl but got {format}'
 
         if os.path.exists(filename):
             os.remove(filename)
-        if os.path.exists(filename + '.model'):
-            os.remove(filename + '.model')
-        if os.path.exists(filename + '.model.meta'):
-            os.remove(filename + '.model.meta')
+        if os.path.exists(f'{filename}.model'):
+            os.remove(f'{filename}.model')
+        if os.path.exists(f'{filename}.model.meta'):
+            os.remove(f'{filename}.model.meta')
         filedir = get_dir_without_last_slash(filename)
-        if os.path.exists(filedir + '/checkpoint'):
-            os.remove(filedir + '/checkpoint')
+        if os.path.exists(f'{filedir}/checkpoint'):
+            os.remove(f'{filedir}/checkpoint')
 
     @classmethod
     def reset(cls):
@@ -363,14 +360,14 @@ class ToddNoiseClassifierTrainTestModel(NeuralNetTrainTestModel, ClassifierMixin
         # randomly split data into training and validation set
         num_data = len(patches)
         indices = np.random.permutation(num_data)
-        num_train_data = int(num_data / 2) # do even split
+        num_train_data = num_data // 2
         train_indices = indices[:num_train_data]
         validate_indices = indices[num_train_data:]
         train_posindices = list(filter(lambda idx: labels[idx] == 1, train_indices))
         train_negindices = list(filter(lambda idx: labels[idx] == 0, train_indices))
 
         input_image_batch, logits, y_, y_p, W_conv0, W_conv1, loss, train_step \
-            = self.create_tf_variables(self.param_dict)
+                = self.create_tf_variables(self.param_dict)
 
         init = tf.initialize_all_variables()
         sess = tf.Session()
@@ -409,7 +406,7 @@ class ToddNoiseClassifierTrainTestModel(NeuralNetTrainTestModel, ClassifierMixin
                 if saver is None:
                     saver = tf.train.Saver(max_to_keep=0)
                 outputfile = "%s/model_epoch_%d.ckpt" % (self.checkpoints_dir, j,)
-                print("Checkpointing -> %s" % (outputfile,))
+                print(f"Checkpointing -> {outputfile}")
                 saver.save(sess, outputfile)
 
             halfbatch = self.batch_size // 2
@@ -445,13 +442,11 @@ class ToddNoiseClassifierTrainTestModel(NeuralNetTrainTestModel, ClassifierMixin
 
             print("")
 
-        model = {
+        return {
             'sess': sess,
             'y_p': y_p,
             'input_image_batch': input_image_batch,
         }
-
-        return model
 
     def _evaluate_on_patches(self, patches_in, labels_in, input_image_batch,
                              loss_in, sess, indices, y_, y_p, type_="train"):
@@ -486,10 +481,7 @@ class ToddNoiseClassifierTrainTestModel(NeuralNetTrainTestModel, ClassifierMixin
 
         ys_patche_pred = sess.run(y_p, feed_dict={input_image_batch: patches})
 
-        # predict by majority voting on all patches
-        y_pred = scipy.stats.mode(ys_patche_pred)[0][0]
-
-        return y_pred
+        return scipy.stats.mode(ys_patche_pred)[0][0]
 
     @classmethod
     def create_tf_variables(cls, param_dict):

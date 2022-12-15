@@ -29,9 +29,9 @@ class BDrateCalculator(object):
         setB = cls._dedup_and_order(setB)
         # ==== added by zli =======
 
-        assert not (len(setA) < 4 or len(setB) < 4), \
-            "Problem with input RD point lists. setA is size {}, " \
-            "setB is size {}".format(len(setA), len(setB))
+        assert (
+            len(setA) >= 4 and len(setB) >= 4
+        ), f"Problem with input RD point lists. setA is size {len(setA)}, setB is size {len(setB)}"
 
         if not cls.isCurveMonotonic(setA):
             raise AssertionError(cls.REJECTED_BD_RATE_NON_MONOTONIC)
@@ -82,10 +82,7 @@ class BDrateCalculator(object):
 
     @staticmethod
     def ratesLookOkay(set_):
-        for i in range(len(set_)):
-            if set_[i][0] == 0:
-                return False
-        return True
+        return all(set_[i][0] != 0 for i in range(len(set_)))
 
     # // BD-rate calculation for arbitrary number (N) points
     # // cf. https://www.mathworks.com/moler/interp.pdf, sections 3.3 - 3.4

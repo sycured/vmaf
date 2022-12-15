@@ -228,7 +228,6 @@ class ResultStoreTest(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, 'result') and hasattr(self, 'result_store'):
             self.result_store.delete(self.result.asset, self.result.executor_id)
-        pass
 
     def test_file_system_result_store_save_load(self):
         self.result_store = FileSystemResultStore(logger=None)
@@ -285,9 +284,9 @@ class ResultAggregatingTest(unittest.TestCase):
         combined_result = Result.combine_result([results[0], results[1]])
 
         # check that all keys are there
-        combined_result_keys = [key for key in combined_result.result_dict]
-        keys_0 = [key for key in results[0].result_dict]
-        keys_1 = [key for key in results[1].result_dict]
+        combined_result_keys = list(combined_result.result_dict)
+        keys_0 = list(results[0].result_dict)
+        keys_1 = list(results[1].result_dict)
         assert set(keys_0) == set(keys_1) == set(combined_result_keys)
 
         # check that the dictionaries have been copied as expected

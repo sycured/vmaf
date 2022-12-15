@@ -102,7 +102,7 @@ class YuvReader(object):
         else:
             assert False
 
-        assert num_frms.is_integer(), 'Number of frames is not integer: {}'.format(num_frms)
+        assert num_frms.is_integer(), f'Number of frames is not integer: {num_frms}'
 
         return int(num_frms)
 
@@ -111,15 +111,15 @@ class YuvReader(object):
         return self.UV_WIDTH_HEIGHT_MULTIPLIERS_DICT[self.yuv_type]
 
     def _assert_yuv_type(self):
-        assert (self.yuv_type in self.SUPPORTED_YUV_8BIT_TYPES
-                or self.yuv_type in self.SUPPORTED_YUV_10BIT_LE_TYPES
-                or self.yuv_type in self.SUPPORTED_YUV_12BIT_LE_TYPES
-                or self.yuv_type in self.SUPPORTED_YUV_16BIT_LE_TYPES), \
-            'Unsupported YUV type: {}'.format(self.yuv_type)
+        assert (
+            self.yuv_type in self.SUPPORTED_YUV_8BIT_TYPES
+            or self.yuv_type in self.SUPPORTED_YUV_10BIT_LE_TYPES
+            or self.yuv_type in self.SUPPORTED_YUV_12BIT_LE_TYPES
+            or self.yuv_type in self.SUPPORTED_YUV_16BIT_LE_TYPES
+        ), f'Unsupported YUV type: {self.yuv_type}'
 
     def _assert_file_exist(self):
-        assert os.path.exists(self.filepath), \
-            "File does not exist: {}".format(self.filepath)
+        assert os.path.exists(self.filepath), f"File does not exist: {self.filepath}"
 
     def _asserts(self):
 
@@ -146,7 +146,7 @@ class YuvReader(object):
 
     def next(self, format='uint'):
 
-        assert format == 'uint' or format == 'float'
+        assert format in ['uint', 'float']
 
         y_width = self.width
         y_height = self.height

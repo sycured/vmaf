@@ -76,7 +76,7 @@ class FeatureAssembler(object):
 
         # assemble an output dict with demanded atom features
         # atom_features_dict = self.fextractor_atom_features_dict
-        result_dicts = list(map(lambda x: dict(), self.assets))
+        result_dicts = list(map(lambda x: {}, self.assets))
         for fextractor_type in self.feature_dict:
             assert fextractor_type in self.type2results_dict
             for atom_feature in self._get_atom_features(fextractor_type):
@@ -105,18 +105,16 @@ class FeatureAssembler(object):
 
     def _get_scores_key(self, fextractor_type, atom_feature):
         fextractor_subclass = FeatureExtractor.find_subclass(fextractor_type)
-        scores_key = fextractor_subclass.get_scores_key(atom_feature)
-        return scores_key
+        return fextractor_subclass.get_scores_key(atom_feature)
 
     def _get_atom_features(self, fextractor_type):
-        if self.feature_dict[fextractor_type] == 'all':
-            fextractor_class = FeatureExtractor.find_subclass(fextractor_type)
-            atom_features = fextractor_class.ATOM_FEATURES + getattr(fextractor_class, 'DERIVED_ATOM_FEATURES', [])
+        if self.feature_dict[fextractor_type] != 'all':
+            return self.feature_dict[fextractor_type]
 
-        else:
-            atom_features = self.feature_dict[fextractor_type]
-
-        return atom_features
+        fextractor_class = FeatureExtractor.find_subclass(fextractor_type)
+        return fextractor_class.ATOM_FEATURES + getattr(
+            fextractor_class, 'DERIVED_ATOM_FEATURES', []
+        )
 
     def _get_fextractor_instance(self, fextractor_type):
 
@@ -129,13 +127,13 @@ class FeatureAssembler(object):
         else:
             optional_dict = self.optional_dict  # FIXME: hacky
 
-        fextractor = fextractor_class(assets=self.assets,
-                                      logger=self.logger,
-                                      fifo_mode=self.fifo_mode,
-                                      delete_workdir=self.delete_workdir,
-                                      result_store=self.result_store,
-                                      optional_dict=optional_dict,
-                                      optional_dict2=self.optional_dict2,
-                                      save_workfiles=self.save_workfiles,
-                                      )
-        return fextractor
+        return fextractor_class(
+            assets=self.assets,
+            logger=self.logger,
+            fifo_mode=self.fifo_mode,
+            delete_workdir=self.delete_workdir,
+            result_store=self.result_store,
+            optional_dict=optional_dict,
+            optional_dict2=self.optional_dict2,
+            save_workfiles=self.save_workfiles,
+        )

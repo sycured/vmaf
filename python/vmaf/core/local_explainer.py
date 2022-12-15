@@ -129,14 +129,12 @@ class LocalExplainer(object):
             feature_weight = self.model_regressor.coef_.copy()
             feature_weights[i_sample, :] = feature_weight
 
-        exps = {
+        return {
             'feature_weights': feature_weights,
             'features': xs_2d_unnormalized,
             'features_normalized': xs_2d,
-            'feature_names': feature_names
+            'feature_names': feature_names,
         }
-
-        return exps
 
     @staticmethod
     def assert_explanations(exps, assets=None, ys=None, ys_pred=None):
@@ -156,7 +154,7 @@ class LocalExplainer(object):
         # asserts
         N = cls.assert_explanations(exps, assets, ys, ys_pred)
 
-        print("Features: {}".format(exps['feature_names']))
+        print(f"Features: {exps['feature_names']}")
 
         for n in range(N):
             weights = exps['feature_weights'][n]
@@ -166,9 +164,13 @@ class LocalExplainer(object):
             y = ys['label'][n] if ys is not None else None
             y_pred = ys_pred[n] if ys_pred is not None else None
 
-            print("{ref}".format(
-                ref=get_file_name_without_extension(asset.ref_path) if
-                asset is not None else "Asset {}".format(n)))
+            print(
+                "{ref}".format(
+                    ref=get_file_name_without_extension(asset.ref_path)
+                    if asset is not None
+                    else f"Asset {n}"
+                )
+            )
             if asset is not None:
                 print("\tDistorted: {dis}".format(
                     dis=get_file_name_without_extension(asset.dis_path)))
@@ -176,8 +178,8 @@ class LocalExplainer(object):
                 print("\tground truth: {y:.3f}".format(y=y))
             if y_pred is not None:
                 print("\tpredicted: {y_pred:.3f}".format(y_pred=y_pred))
-            print("\tfeature value: {}".format(features))
-            print("\tfeature weight: {}".format(weights))
+            print(f"\tfeature value: {features}")
+            print(f"\tfeature weight: {weights}")
 
     @classmethod
     def plot_explanations(cls, exps, assets=None, ys=None, ys_pred=None):
@@ -208,7 +210,7 @@ class LocalExplainer(object):
 
             title = ""
             if asset is not None:
-                title += "{}\n".format(get_file_name_without_extension(asset.ref_path))
+                title += f"{get_file_name_without_extension(asset.ref_path)}\n"
             if y is not None:
                 title += "ground truth: {:.3f}\n".format(y)
             if y_pred is not None:
@@ -259,10 +261,9 @@ class LocalExplainer(object):
         N = cls.assert_explanations(exps)
         for index in indexs:
             assert index < N
-        exps2 = {
+        return {
             'feature_weights': exps['feature_weights'][indexs, :],
             'features': exps['features'][indexs, :],
             'features_normalized': exps['features_normalized'][indexs, :],
-            'feature_names': exps['feature_names']
+            'feature_names': exps['feature_names'],
         }
-        return exps2

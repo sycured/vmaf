@@ -50,7 +50,7 @@ class StrredFeatureExtractor(MatlabFeatureExtractor):
         dis_procfile_path = asset.dis_procfile_path
         log_file_path = self._get_log_file_path(asset)
 
-        current_dir = os.getcwd() + '/'
+        current_dir = f'{os.getcwd()}/'
 
         ref_procfile_path = make_absolute_path(ref_procfile_path, current_dir)
         dis_procfile_path = make_absolute_path(dis_procfile_path, current_dir)
@@ -139,7 +139,7 @@ class StrredOptFeatureExtractor(MatlabFeatureExtractor):
             dis_procfile_path = asset.dis_procfile_path
             log_file_path = self._get_log_file_path(asset)
 
-            current_dir = os.getcwd() + '/'
+            current_dir = f'{os.getcwd()}/'
 
             ref_procfile_path = make_absolute_path(ref_procfile_path, current_dir)
             dis_procfile_path = make_absolute_path(dis_procfile_path, current_dir)
@@ -230,7 +230,7 @@ class SpEEDMatlabFeatureExtractor(MatlabFeatureExtractor):
         ref_procfile_path = asset.ref_procfile_path
         dis_procfile_path = asset.dis_procfile_path
         log_file_path = self._get_log_file_path(asset)
-        current_dir = os.getcwd() + '/'
+        current_dir = f'{os.getcwd()}/'
         ref_procfile_path = make_absolute_path(ref_procfile_path, current_dir)
         dis_procfile_path = make_absolute_path(dis_procfile_path, current_dir)
         log_file_path = make_absolute_path(log_file_path, current_dir)
@@ -268,9 +268,9 @@ class SpEEDMatlabFeatureExtractor(MatlabFeatureExtractor):
 
         result = super(SpEEDMatlabFeatureExtractor, cls)._post_process_result(result)
         for scale_now in cls.scale_list:
-            sspeed_scale_now_scores_key = cls.get_scores_key('sspeed_' + str(scale_now))
-            tspeed_scale_now_scores_key = cls.get_scores_key('tspeed_' + str(scale_now))
-            speed_scale_now_scores_key = cls.get_scores_key('speed_' + str(scale_now))
+            sspeed_scale_now_scores_key = cls.get_scores_key(f'sspeed_{str(scale_now)}')
+            tspeed_scale_now_scores_key = cls.get_scores_key(f'tspeed_{str(scale_now)}')
+            speed_scale_now_scores_key = cls.get_scores_key(f'speed_{str(scale_now)}')
             sspeed_scale_now_scores = result.result_dict[sspeed_scale_now_scores_key]
             tspeed_scale_now_scores = result.result_dict[tspeed_scale_now_scores_key]
             assert len(sspeed_scale_now_scores) == len(tspeed_scale_now_scores)
@@ -301,7 +301,7 @@ class STMADFeatureExtractor(MatlabFeatureExtractor):
 
         def run_stmad_cmd(stmad_cmd):
 
-            current_dir = os.getcwd() + '/'
+            current_dir = f'{os.getcwd()}/'
             os.chdir(self.MATLAB_WORKSPACE)
             run_process(stmad_cmd, shell=True)
             os.chdir(current_dir)
@@ -332,7 +332,7 @@ class STMADFeatureExtractor(MatlabFeatureExtractor):
         dis_procfile_path = asset.dis_procfile_path
         log_file_path = self._get_log_file_path(asset)
 
-        current_dir = os.getcwd() + '/'
+        current_dir = f'{os.getcwd()}/'
 
         ref_procfile_path = make_absolute_path(ref_procfile_path, current_dir)
         dis_procfile_path = make_absolute_path(dis_procfile_path, current_dir)
@@ -416,7 +416,7 @@ class iCIDFeatureExtractor(MatlabFeatureExtractor):
        dis_workfile_path = asset.dis_workfile_path
        log_file_path = self._get_log_file_path(asset)
 
-       current_dir = os.getcwd() + '/'
+       current_dir = f'{os.getcwd()}/'
 
        ref_workfile_path = make_absolute_path(ref_workfile_path, current_dir)
        dis_workfile_path = make_absolute_path(dis_workfile_path, current_dir)

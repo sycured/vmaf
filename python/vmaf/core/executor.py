@@ -104,18 +104,18 @@ class Executor(TypeVersionEnabled):
         '_need_ffmpeg_key_Executor._need_ffmpeg_sorted_key_sorted'
         """
         def _slugify(v):
-            if callable(v):
-                s = str(v)
-                assert s[0] == '<' and s[-1] == '>'
-                s = s[1:-1]
-                l = s.split(' ')
-                assert 'function' in l
-                for idx, e in enumerate(l):
-                    if e == 'function':
-                        assert idx < len(l) - 1
-                        return l[idx + 1]
-            else:
+            if not callable(v):
                 return v
+            s = str(v)
+            assert s[0] == '<' and s[-1] == '>'
+            s = s[1:-1]
+            l = s.split(' ')
+            assert 'function' in l
+            for idx, e in enumerate(l):
+                if e == 'function':
+                    assert idx < len(l) - 1
+                    return l[idx + 1]
+
         return '_'.join(map(lambda k: '{k}_{v}'.format(k=k,v=_slugify(d[k])), sorted(d.keys())))
 
     @property
@@ -125,7 +125,7 @@ class Executor(TypeVersionEnabled):
         if self.optional_dict is not None and len(self.optional_dict) > 0:
             # include optional_dict info in executor_id for result store,
             # as parameters in optional_dict will impact result
-            executor_id_ += '_{}'.format(self.get_normalized_string_from_dict(self.optional_dict))
+            executor_id_ += f'_{self.get_normalized_string_from_dict(self.optional_dict)}'
             replace_chars = ["'", " "]
             for c in replace_chars:
                 executor_id_ = executor_id_.replace(c, "_")
@@ -141,10 +141,7 @@ class Executor(TypeVersionEnabled):
                 "For each asset, if {type} result has not been generated, run "
                 "and generate {type} result...".format(type=self.executor_id))
 
-        if 'parallelize' in kwargs:
-            parallelize = kwargs['parallelize']
-        else:
-            parallelize = False
+        parallelize = kwargs['parallelize'] if 'parallelize' in kwargs else False
         assert isinstance(parallelize, bool)
 
         if 'processes' in kwargs and kwargs['processes'] is not None:
@@ -202,8 +199,6 @@ class Executor(TypeVersionEnabled):
 
         for asset in self.assets:
             self._assert_an_asset(asset)
-
-        pass
 
     @staticmethod
     def _need_ffmpeg(asset):
@@ -263,9 +258,9 @@ class Executor(TypeVersionEnabled):
 
         if asset.ref_yuv_type == 'notyuv' and asset.dis_yuv_type == 'notyuv':
             return asset.workfile_yuv_type
-        elif asset.ref_yuv_type == 'notyuv' and asset.dis_yuv_type != 'notyuv':
+        elif asset.ref_yuv_type == 'notyuv':
             return asset.dis_yuv_type
-        elif asset.ref_yuv_type != 'notyuv' and asset.dis_yuv_type == 'notyuv':
+        elif asset.dis_yuv_type == 'notyuv':
             return asset.ref_yuv_type
         else: # neither notyuv
             assert asset.ref_yuv_type == asset.dis_yuv_type, "YUV types for ref and dis do not match."
@@ -302,10 +297,12 @@ class Executor(TypeVersionEnabled):
                 type_version_str=self.get_cozy_type_version_string()))
 
     def _assert_paths(self, asset):
-        assert os.path.exists(asset.ref_path) or match_any_files(asset.ref_path), \
-            "Reference path {} does not exist.".format(asset.ref_path)
-        assert os.path.exists(asset.dis_path) or match_any_files(asset.dis_path), \
-            "Distorted path {} does not exist.".format(asset.dis_path)
+        assert os.path.exists(asset.ref_path) or match_any_files(
+            asset.ref_path
+        ), f"Reference path {asset.ref_path} does not exist."
+        assert os.path.exists(asset.dis_path) or match_any_files(
+            asset.dis_path
+        ), f"Distorted path {asset.dis_path} does not exist."
 
     def _run_on_asset(self, asset):
         # Wraper around the essential function _generate_result, to
@@ -316,7 +313,7 @@ class Executor(TypeVersionEnabled):
             result = self.result_store.load(asset, self.executor_id)
             qw, qh = asset.quality_width_height
             if result is not None and self.save_workfiles is True \
-                    and not self.result_store.has_workfile(asset, self.executor_id, f'_dis.{qw}x{qh}.{self._get_workfile_yuv_type(asset)}.yuv'):
+                        and not self.result_store.has_workfile(asset, self.executor_id, f'_dis.{qw}x{qh}.{self._get_workfile_yuv_type(asset)}.yuv'):
                 result = None  # if save_workfiles is True and has_workfile is False, invalidate result and rerun
         else:
             result = None
@@ -324,11 +321,7 @@ class Executor(TypeVersionEnabled):
         # if result can be retrieved from result_store, skip log file
         # generation and reading result from log file, but directly return
         # return the retrieved result
-        if result is not None:
-            if self.logger:
-                self.logger.info('{id} result exists. Skip {id} run.'.
-                                 format(id=self.executor_id))
-        else:
+        if result is None:
 
             if self.logger:
                 self.logger.info('{id} result does\'t exist. Perform {id} '
@@ -349,36 +342,24 @@ class Executor(TypeVersionEnabled):
 
             # remove workfiles if exist (do early here to avoid race condition
             # when ref path and dis path have some overlap)
-            if asset.use_path_as_workpath:
-                # do nothing
-                pass
-            else:
+            if not asset.use_path_as_workpath:
                 self._close_workfiles(asset)
 
             # remove procfiles if exist (do early here to avoid race condition
             # when ref path and dis path have some overlap)
-            if asset.use_workpath_as_procpath:
-                # do nothing
-                pass
-            else:
+            if not asset.use_workpath_as_procpath:
                 self._close_procfiles(asset)
 
             log_file_path = self._get_log_file_path(asset)
             make_parent_dirs_if_nonexist(log_file_path)
 
-            if asset.use_path_as_workpath:
-                # do nothing
-                pass
-            else:
+            if not asset.use_path_as_workpath:
                 if self.fifo_mode:
                     self._open_workfiles_in_fifo_mode(asset)
                 else:
                     self._open_workfiles(asset)
 
-            if asset.use_workpath_as_procpath:
-                # do nothing
-                pass
-            else:
+            if not asset.use_workpath_as_procpath:
                 if self.fifo_mode:
                     self._open_procfiles_in_fifo_mode(asset)
                 else:
@@ -401,16 +382,10 @@ class Executor(TypeVersionEnabled):
 
             # clean up workfiles
             if self.delete_workdir:
-                if asset.use_path_as_workpath:
-                    # do nothing
-                    pass
-                else:
+                if not asset.use_path_as_workpath:
                     self._close_workfiles(asset)
 
-                if asset.use_workpath_as_procpath:
-                    # do nothing
-                    pass
-                else:
+                if not asset.use_workpath_as_procpath:
                     self._close_procfiles(asset)
 
             # clean up workdir and log files in it
@@ -424,6 +399,9 @@ class Executor(TypeVersionEnabled):
                 log_dir = get_dir_without_last_slash(log_file_path)
                 shutil.rmtree(log_dir)
 
+        elif self.logger:
+            self.logger.info('{id} result exists. Skip {id} run.'.
+                             format(id=self.executor_id))
         result = self._post_process_result(result)
 
         return result
@@ -570,10 +548,11 @@ class Executor(TypeVersionEnabled):
         pad_cmd = cls._get_filter_cmd(asset, 'pad', ref_or_dis)
         quality_width, quality_height = quality_width_height
         scale_cmd = f'scale={quality_width}x{quality_height}'
-        filter_cmds = []
-        for key in Asset.ORDERED_FILTER_LIST:
-            if key != 'crop' and key != 'pad':
-                filter_cmds.append(cls._get_filter_cmd(asset, key, ref_or_dis))
+        filter_cmds = [
+            cls._get_filter_cmd(asset, key, ref_or_dis)
+            for key in Asset.ORDERED_FILTER_LIST
+            if key not in ['crop', 'pad']
+        ]
         vf_cmd = [select_cmd, crop_cmd, pad_cmd, scale_cmd] + filter_cmds
         vf_cmd = ','.join(filter(lambda s: s != '', vf_cmd))
 
@@ -655,9 +634,9 @@ class Executor(TypeVersionEnabled):
 
     @staticmethod
     def _get_yuv_src_fmt_cmd(yuv_type, height, width):
-        yuv_src_fmt_cmd = '-f rawvideo -pix_fmt {yuv_fmt} -s {width}x{height}'. \
-            format(yuv_fmt=yuv_type, width=width, height=height)
-        return yuv_src_fmt_cmd
+        return '-f rawvideo -pix_fmt {yuv_fmt} -s {width}x{height}'.format(
+            yuv_fmt=yuv_type, width=width, height=height
+        )
 
     @staticmethod
     def _get_notyuv_src_fmt_cmd(path):
@@ -673,8 +652,11 @@ class Executor(TypeVersionEnabled):
 
     @staticmethod
     def _get_filter_cmd(asset, key, target):
-        return "{}={}".format(key, asset.get_filter_cmd(key, target)) \
-            if asset.get_filter_cmd(key, target) is not None else ""
+        return (
+            f"{key}={asset.get_filter_cmd(key, target)}"
+            if asset.get_filter_cmd(key, target) is not None
+            else ""
+        )
 
     @staticmethod
     def _get_vframes_cmd(asset, ref_or_dis):
@@ -683,14 +665,13 @@ class Executor(TypeVersionEnabled):
         elif ref_or_dis == 'dis':
             start_end_frame = asset.dis_start_end_frame
         else:
-            raise AssertionError('Unknown ref_or_dis: {}'.format(ref_or_dis))
+            raise AssertionError(f'Unknown ref_or_dis: {ref_or_dis}')
 
         if start_end_frame is None:
             return "", ""
-        else:
-            start_frame, end_frame = start_end_frame
-            num_frames = end_frame - start_frame + 1
-            return f"-vframes {num_frames}", f"select='gte(n\\,{start_frame})*gte({end_frame}\\,n)',setpts=PTS-STARTPTS"
+        start_frame, end_frame = start_end_frame
+        num_frames = end_frame - start_frame + 1
+        return f"-vframes {num_frames}", f"select='gte(n\\,{start_frame})*gte({end_frame}\\,n)',setpts=PTS-STARTPTS"
 
     def _close_ref_workfile(self, asset):
 
@@ -887,8 +868,9 @@ class NorefExecutorMixin(object):
                 break
             sleep(0.1)
         else:
-            raise RuntimeError("dis video workfile path {} is missing.".format(
-                asset.dis_workfile_path))
+            raise RuntimeError(
+                f"dis video workfile path {asset.dis_workfile_path} is missing."
+            )
 
     @override(Executor)
     def _wait_for_procfiles(self, asset):
@@ -898,13 +880,15 @@ class NorefExecutorMixin(object):
                 break
             sleep(0.1)
         else:
-            raise RuntimeError("dis video procfile path {} is missing.".format(
-                asset.dis_procfile_path))
+            raise RuntimeError(
+                f"dis video procfile path {asset.dis_procfile_path} is missing."
+            )
 
     @override(Executor)
     def _assert_paths(self, asset):
-        assert os.path.exists(asset.dis_path) or match_any_files(asset.dis_path), \
-            "Distorted path {} does not exist.".format(asset.dis_path)
+        assert os.path.exists(asset.dis_path) or match_any_files(
+            asset.dis_path
+        ), f"Distorted path {asset.dis_path} does not exist."
 
     @override(Executor)
     def _open_workfiles(self, asset):

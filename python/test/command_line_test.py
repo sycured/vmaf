@@ -36,8 +36,8 @@ class CommandLineTest(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.out_model_filepath):
             os.remove(self.out_model_filepath)
-        if os.path.exists(self.out_model_filepath + '.model'):
-            os.remove(self.out_model_filepath + '.model')
+        if os.path.exists(f'{self.out_model_filepath}.model'):
+            os.remove(f'{self.out_model_filepath}.model')
         if os.path.exists(self.batch_filename):
             os.remove(self.batch_filename)
 

@@ -31,8 +31,8 @@ class FloatMotionFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtracto
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_motion', yuv_type, ref_path, dis_path, w, h,
@@ -69,8 +69,8 @@ class IntegerMotionFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtrac
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'motion', yuv_type, ref_path, dis_path, w, h,
@@ -129,8 +129,8 @@ class FloatVifFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_vif', yuv_type, ref_path, dis_path, w, h,
@@ -192,8 +192,8 @@ class IntegerVifFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'vif', yuv_type, ref_path, dis_path, w, h,
@@ -257,8 +257,8 @@ class FloatAdmFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'float_adm', yuv_type, ref_path, dis_path, w, h,
@@ -292,8 +292,8 @@ class IntegerPsnrFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtracto
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'psnr', yuv_type, ref_path, dis_path, w, h,
@@ -358,8 +358,8 @@ class IntegerAdmFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'adm', yuv_type, ref_path, dis_path, w, h,
@@ -391,8 +391,8 @@ class CIEDE2000FeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor)
         h=quality_height
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'ciede', yuv_type, ref_path, dis_path, w, h, log_file_path, logger,

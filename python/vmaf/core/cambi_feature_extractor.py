@@ -19,12 +19,12 @@ class CambiFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
 
         quality_width, quality_height = asset.quality_width_height
         assert asset.dis_encode_width_height is not None, \
-            'For Cambi, dis_encode_width_height cannot be None. One can specify dis_encode_width_height by adding ' \
-            'the following fields to asset_dict: 1) dis_enc_width and dis_enc_height, or 2) dis_width and ' \
-            'dis_height, or 3) width and height.'
+                'For Cambi, dis_encode_width_height cannot be None. One can specify dis_encode_width_height by adding ' \
+                'the following fields to asset_dict: 1) dis_enc_width and dis_enc_height, or 2) dis_width and ' \
+                'dis_height, or 3) width and height.'
         encode_width, encode_height = asset.dis_encode_width_height
 
-        additional_params = dict()
+        additional_params = {}
         if encode_width != quality_width or encode_height != quality_height:
             additional_params = {'enc_width': encode_width, 'enc_height': encode_height}
 
@@ -35,8 +35,8 @@ class CambiFeatureExtractor(VmafexecFeatureExtractorMixin, FeatureExtractor):
         dis_path = asset.dis_procfile_path
         logger = self.logger
 
-        optional_dict = self.optional_dict if self.optional_dict is not None else dict()
-        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else dict()
+        optional_dict = self.optional_dict if self.optional_dict is not None else {}
+        optional_dict2 = self.optional_dict2 if self.optional_dict2 is not None else {}
 
         ExternalProgramCaller.call_vmafexec_single_feature(
             'cambi', yuv_type, ref_path, dis_path, quality_width, quality_height,

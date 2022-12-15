@@ -106,8 +106,8 @@ class BootstrapTrainTestModelTest(unittest.TestCase):
 
         self.model.to_file(self.model_filename)
 
-        self.assertTrue(os.path.exists('{}'.format(self.model_filename)))
-        self.assertTrue(os.path.exists('{}'.format(self.model_filename) + '.model'))
+        self.assertTrue(os.path.exists(f'{self.model_filename}'))
+        self.assertTrue(os.path.exists(f'{self.model_filename}.model'))
         for i in range(1, 100):
             self.assertTrue(os.path.exists('{}.{:04d}'.format(self.model_filename, i)))
             self.assertTrue(os.path.exists('{}.{:04d}'.format(self.model_filename, i) + '.model'))
@@ -343,8 +343,8 @@ class BootstrapTrainTestModelTestJson(unittest.TestCase):
 
         self.model.to_file(self.model_filename_json, format='json')
 
-        self.assertTrue(os.path.exists('{}'.format(self.model_filename_json)))
-        self.assertFalse(os.path.exists('{}'.format(self.model_filename_json) + '.model'))
+        self.assertTrue(os.path.exists(f'{self.model_filename_json}'))
+        self.assertFalse(os.path.exists(f'{self.model_filename_json}.model'))
         for i in range(1, 100):
             self.assertTrue(os.path.exists('{}.{:04d}'.format(self.model_filename_json, i)))
             self.assertFalse(os.path.exists('{}.{:04d}'.format(self.model_filename_json, i) + '.model'))
@@ -435,8 +435,8 @@ class BootstrapTrainTestModelTestJsonCombined(unittest.TestCase):
 
         self.model.to_file(self.model_filename_json, format='json', combined=True)
 
-        self.assertTrue(os.path.exists('{}'.format(self.model_filename_json)))
-        self.assertFalse(os.path.exists('{}'.format(self.model_filename_json) + '.model'))
+        self.assertTrue(os.path.exists(f'{self.model_filename_json}'))
+        self.assertFalse(os.path.exists(f'{self.model_filename_json}.model'))
         for i in range(1, 100):
             self.assertFalse(os.path.exists('{}.{:04d}'.format(self.model_filename_json, i)))
             self.assertFalse(os.path.exists('{}.{:04d}'.format(self.model_filename_json, i) + '.model'))
